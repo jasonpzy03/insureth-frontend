@@ -1,0 +1,16 @@
+spring:
+  application:
+    name: cp-gateway
+
+  cloud:
+    gateway:
+      server:
+        webmvc:
+          routes:
+            - id: auth-cp-users-route
+              uri: http://localhost:8081
+              predicates:
+                - Path=/api/v1/auth/cp-users/**
+
+server:
+  port: 8080

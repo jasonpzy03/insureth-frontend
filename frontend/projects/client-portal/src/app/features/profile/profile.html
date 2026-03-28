@@ -1,0 +1,22 @@
+<div class="flex justify-center p-6">
+  <nz-card nzTitle="User Profile" [nzBordered]="false" class="w-full max-w-[600px] rounded-xl shadow-[0_4px_12px_rgba(0,0,0,0.05)]">
+    <div class="flex items-center gap-5 mb-6">
+      <div class="flex items-center justify-center w-16 h-16 bg-gray-100 rounded-full text-[32px] text-primary">
+        <span nz-icon nzType="user" nzTheme="outline"></span>
+      </div>
+      <div>
+        <h2 nz-typography class="m-0">{{ shortAddress }}</h2>
+        <p nz-typography nzType="secondary">Connected via MetaMask</p>
+      </div>
+    </div>
+
+    <nz-divider></nz-divider>
+
+    <div class="flex justify-end">
+      <button nz-button nzType="primary" nzDanger (click)="logout()" nzSize="large" class="rounded-md">
+        <span nz-icon nzType="logout"></span> Logout
+      </button>
+    </div>
+  </nz-card>
+</div>
+

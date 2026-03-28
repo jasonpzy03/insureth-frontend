@@ -1,0 +1,45 @@
+<nz-header class="flex items-center bg-white">
+  <div class="flex items-center flex-1">
+    <div class="mr-12">
+      <a routerLink="/" class="flex justify-center items-center no-underline">
+        <img src="/logo.png" alt="Insureth Logo" class="w-[32px] h-[32px]">
+        <h1 class="text-[20px] font-bold">Insureth</h1>
+      </a>
+    </div>
+
+    <ul nz-menu class="!bg-transparent leading-[64px] border-b-0" nzMode="horizontal"
+      *ngIf="walletService.isAuthenticated() && walletService.isProfileComplete()">
+      <li nz-menu-item routerLinkActive="ant-menu-item-selected" routerLink="/dashboard">Dashboard</li>
+      <li nz-menu-item routerLinkActive="ant-menu-item-selected" routerLink="/insurance">Insurance</li>
+      <li nz-menu-item routerLinkActive="ant-menu-item-selected" routerLink="/claims">Claims</li>
+      <li nz-menu-item routerLinkActive="ant-menu-item-selected" routerLink="/profile">Profile</li>
+    </ul>
+  </div>
+
+  <ng-container *ngIf="walletService.isAuthenticated(); else loginBtn">
+    <button nz-button nzType="text" nz-dropdown [nzDropdownMenu]="userMenu" nzTrigger="click"
+      class="flex items-center gap-2 px-3 transition-all border border-gray-200 rounded-md h-9 text-gray-500 hover:border-primary hover:text-primary hover:bg-primary-bg">
+      <span class="font-mono text-[13px]">{{ shortAddress }}</span>
+      <span nz-icon nzType="down"></span>
+    </button>
+    <nz-dropdown-menu #userMenu="nzDropdownMenu">
+      <ul nz-menu>
+        <li nz-menu-item routerLink="/profile" *ngIf="walletService.isProfileComplete()">
+          <span nz-icon nzType="user"></span> My Profile
+        </li>
+        <li nz-divider *ngIf="walletService.isProfileComplete()"></li>
+        <li nz-menu-item (click)="logout()" class="!text-red-500 hover:!bg-red-50">
+          <span nz-icon nzType="logout"></span> Disconnect
+        </li>
+      </ul>
+    </nz-dropdown-menu>
+  </ng-container>
+
+  <ng-template #loginBtn>
+    <button nz-button nzType="primary" routerLink="/login"
+      class="font-semibold rounded-md bg-primary border-primary hover:bg-primary-hover hover:border-primary-hover"
+      *ngIf="!isLoginPage">
+      Connect Wallet
+    </button>
+  </ng-template>
+</nz-header>

@@ -1,0 +1,58 @@
+<div class="flex items-center justify-center w-full">
+    <nz-card class="w-full max-w-[400px] p-5">
+      <!-- Header -->
+      <div class="mb-8 text-center">
+        <img src="/logo.png" alt="Insureth Logo" class="w-[60px] h-[60px]">
+        <h1 nz-typography class="m-0 text-2xl font-extrabold tracking-tight text-black">Insureth</h1>
+        <p nz-typography nzType="secondary" class="mt-1">
+          Secure, Blockchain-Powered Insurance
+        </p>
+      </div>
+
+      <!-- Sign Up Form (Complete Profile) -->
+      <div class="text-left animate-fade-in">
+        <h3 class="mb-2 font-bold text-center text-black">Complete Your Profile</h3>
+        <p class="mb-6 text-center leading-relaxed text-gray-500">
+          Almost there! Please securely link an email to your address.
+        </p>
+
+        <form nz-form nzLayout="vertical" [formGroup]="profileForm" (ngSubmit)="submitProfile()">
+          <!-- Username Input -->
+          <nz-form-item class="mb-4">
+            <nz-form-label nzRequired nzFor="username">Username</nz-form-label>
+            <nz-form-control nzErrorTip="Please input a username (min 3 characters)!">
+              <nz-input-group nzPrefixIcon="user">
+                <input nz-input formControlName="username" id="username" placeholder="crypto_wizard" />
+              </nz-input-group>
+            </nz-form-control>
+          </nz-form-item>
+
+          <!-- Email Input -->
+          <nz-form-item class="mb-4">
+            <nz-form-label nzRequired nzFor="email">Email Address</nz-form-label>
+            <nz-form-control nzErrorTip="Please input a valid email address!">
+              <nz-input-group nzPrefixIcon="mail">
+                <input nz-input type="email" formControlName="email" id="email" placeholder="you@example.com" />
+              </nz-input-group>
+            </nz-form-control>
+          </nz-form-item>
+
+          <!-- T&C Checkbox -->
+          <nz-form-item class="mb-6">
+            <nz-form-control nzErrorTip="You must accept the terms and conditions.">
+              <label nz-checkbox formControlName="terms">
+                I agree to the <a href="#" class="text-primary hover:underline">Terms & Conditions</a>
+              </label>
+            </nz-form-control>
+          </nz-form-item>
+
+          <!-- Submit Button -->
+          <button nz-button nzType="primary" nzBlock nzSize="large" type="submit"
+            class="h-[52px] font-bold transition-all duration-300 rounded-lg">
+            Complete Profile
+          </button>
+        </form>
+      </div>
+
+    </nz-card>
+</div>

@@ -1,0 +1,38 @@
+<div class="flex items-center justify-center w-full">
+    <nz-card class="w-full max-w-[400px] p-5">
+      <!-- Header -->
+      <div class="mb-8 text-center">
+        <img src="/logo.png" alt="Insureth Logo" class="w-[60px] h-[60px]">
+        <h1 nz-typography class="m-0 text-2xl font-extrabold tracking-tight text-black">Insureth</h1>
+        <p nz-typography nzType="secondary" class="mt-1">
+          Secure, Blockchain-Powered Insurance
+        </p>
+      </div>
+
+      <!-- Wallet Connect Section -->
+      <div class="text-center">
+        <h3 class="mb-3 font-bold text-black">Connect Your Wallet</h3>
+        <p class="mb-6 leading-relaxed">
+          To access the client portal and manage your policies, please connect your MetaMask wallet.
+        </p>
+
+        <nz-alert *ngIf="walletService.error()" nzType="error" [nzMessage]="walletService.error()" nzShowIcon
+          class="mb-4"></nz-alert>
+
+        <button nz-button nzType="default" nzBlock nzSize="large" (click)="connectWallet()"
+          [nzLoading]="walletService.isConnecting()"
+          class="flex items-center justify-center w-full h-[52px] gap-3 font-bold transition-all duration-300 rounded-lg">
+          <span nz-icon nzType="wallet" *ngIf="!walletService.isConnecting()" class="text-lg"></span>
+          {{ walletService.isConnecting() ? 'Connecting & Verifying...' : 'Connect MetaMask' }}
+        </button>
+
+        <div class="mt-4 text-center">
+          <a href="https://metamask.io/download/" target="_blank"
+            class="font-medium hover:underline">
+            Don't have MetaMask? Download here
+          </a>
+        </div>
+      </div>
+
+    </nz-card>
+</div>
