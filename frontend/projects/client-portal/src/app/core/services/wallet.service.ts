@@ -8,6 +8,7 @@ import { BrowserProvider, JsonRpcSigner } from 'ethers';
 export class WalletService {
   private platformId = inject(PLATFORM_ID);
   private provider: BrowserProvider | null = null;
+  private _switchingNetwork = false;
 
   // Using Angular Signals for reactive state
   readonly address = signal<string | null>(null);
@@ -91,7 +92,10 @@ export class WalletService {
       });
 
       eth.on('chainChanged', () => {
-        window.location.reload();
+        // Skip reload if we triggered the network switch ourselves (e.g. during login)
+        if (!this._switchingNetwork) {
+          window.location.reload();
+        }
       });
     }
   }
@@ -124,7 +128,7 @@ export class WalletService {
                 symbol: 'ETH',
                 decimals: 18,
               },
-              rpcUrls: ['https://sepolia.infura.io/v3/YOUR_PROJECT_ID'],
+              rpcUrls: ['https://rpc.sepolia.org'],
               blockExplorerUrls: ['https://sepolia.etherscan.io'],
             },
           ],
@@ -146,13 +150,16 @@ export class WalletService {
 
     try {
       const eth = (window as any).ethereum;
+      const chainId = await eth.request({ method: 'eth_chainId' });
+
+      if (chainId !== '0xaa36a7') {
+        await this.switchToSepolia(eth); // let it refresh early
+        return; // stop flow here
+      }
 
       // 🔥 Connect wallet first
       const accounts = await eth.request({ method: 'eth_requestAccounts' });
       const address = accounts[0];
-
-      // 🔥 Force Sepolia BEFORE anything else
-      await this.switchToSepolia(eth);
 
       // Now initialize provider AFTER switching
       this.provider = new BrowserProvider(eth);
@@ -163,7 +170,10 @@ export class WalletService {
       // 🔥 Now safe to sign (network will show as Sepolia)
       const signer = await this.provider.getSigner();
 
-      const message = `Welcome to Insureth!\n\nPlease sign this message to verify your wallet ownership and log in.\n\nWallet: ${address}\nTimestamp: ${Date.now()}`;
+      const message = `Welcome to Insureth!\n\n
+      Please sign this message to verify your wallet ownership and log in.\n\n
+      Wallet: ${address}\n
+      Timestamp: ${Date.now()}`;
 
       const signature = await signer.signMessage(message);
 
