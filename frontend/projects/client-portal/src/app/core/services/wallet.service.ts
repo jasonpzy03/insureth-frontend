@@ -101,6 +101,40 @@ export class WalletService {
     return !!(eth && eth.isMetaMask);
   }
 
+  async switchToSepolia(eth: any): Promise<void> {
+    const sepoliaChainId = '0xaa36a7';
+
+    try {
+      // Try switching network
+      await eth.request({
+        method: 'wallet_switchEthereumChain',
+        params: [{ chainId: sepoliaChainId }],
+      });
+    } catch (switchError: any) {
+      // If network not added, add it
+      if (switchError.code === 4902) {
+        await eth.request({
+          method: 'wallet_addEthereumChain',
+          params: [
+            {
+              chainId: sepoliaChainId,
+              chainName: 'Sepolia Test Network',
+              nativeCurrency: {
+                name: 'Sepolia ETH',
+                symbol: 'ETH',
+                decimals: 18,
+              },
+              rpcUrls: ['https://sepolia.infura.io/v3/YOUR_PROJECT_ID'],
+              blockExplorerUrls: ['https://sepolia.etherscan.io'],
+            },
+          ],
+        });
+      } else {
+        throw switchError;
+      }
+    }
+  }
+
   async connect(): Promise<void> {
     if (!this.isMetaMaskInstalled()) {
       this.error.set('MetaMask is not installed');
@@ -112,31 +146,45 @@ export class WalletService {
 
     try {
       const eth = (window as any).ethereum;
-      this.provider = new BrowserProvider(eth);
+
+      // 🔥 Connect wallet first
       const accounts = await eth.request({ method: 'eth_requestAccounts' });
       const address = accounts[0];
+
+      // 🔥 Force Sepolia BEFORE anything else
+      await this.switchToSepolia(eth);
+
+      // Now initialize provider AFTER switching
+      this.provider = new BrowserProvider(eth);
 
       this.address.set(address);
       this.isConnected.set(true);
 
-      // Immediately Request Signature for SIWE
+      // 🔥 Now safe to sign (network will show as Sepolia)
       const signer = await this.provider.getSigner();
+
       const message = `Welcome to Insureth!\n\nPlease sign this message to verify your wallet ownership and log in.\n\nWallet: ${address}\nTimestamp: ${Date.now()}`;
 
       const signature = await signer.signMessage(message);
+
       console.log('User successfully signed the login message:', signature);
 
-      // Save session so page refresh doesn't prompt signature again
       localStorage.setItem('insureth_auth_session', address);
 
       this.isAuthenticated.set(true);
       const profileCompleted = localStorage.getItem('insureth_profile_completed') === 'true';
       this.isProfileComplete.set(profileCompleted);
+
       this.updateState(address);
+
     } catch (err: any) {
       console.error('Failed to connect or sign:', err);
-      // Catch user rejection error from metamask or ethers
-      if (err.code === 4001 || err.code === 'ACTION_REJECTED' || err.info?.error?.code === 4001) {
+
+      if (
+        err.code === 4001 ||
+        err.code === 'ACTION_REJECTED' ||
+        err.info?.error?.code === 4001
+      ) {
         this.error.set('Signature or connection rejected. You must authorize both to log in.');
         this.disconnect();
       } else {
