@@ -4,6 +4,7 @@ import { NzLayoutModule } from 'ng-zorro-antd/layout';
 import { HeaderComponent } from './core/components/header/header';
 import { FooterComponent } from './core/components/footer/footer';
 import { AuthModule } from './features/auth/auth.module';
+import { InsuranceModule } from './features/insurance/insurance.module';
 
 @Component({
   selector: 'app-root',
@@ -14,6 +15,7 @@ import { AuthModule } from './features/auth/auth.module';
     HeaderComponent,
     FooterComponent,
     AuthModule,
+    InsuranceModule
   ],
   templateUrl: './app.html',
   styleUrl: './app.scss'

@@ -10,7 +10,14 @@
     <ul nz-menu class="!bg-transparent leading-[64px] border-b-0" nzMode="horizontal"
       *ngIf="walletService.isAuthenticated() && walletService.isProfileComplete()">
       <li nz-menu-item routerLinkActive="ant-menu-item-selected" routerLink="/dashboard">Dashboard</li>
-      <li nz-menu-item routerLinkActive="ant-menu-item-selected" routerLink="/insurance">Insurance</li>
+      <li nz-submenu nzTitle="Insurance">
+        <ul>
+          <li nz-menu-item routerLink="/insurance/flight-insurance">
+            <span nz-icon nzType="rocket" nzTheme="outline"></span>
+            Flight Insurance
+          </li>
+        </ul>
+      </li>
       <li nz-menu-item routerLinkActive="ant-menu-item-selected" routerLink="/claims">Claims</li>
       <li nz-menu-item routerLinkActive="ant-menu-item-selected" routerLink="/profile">Profile</li>
     </ul>

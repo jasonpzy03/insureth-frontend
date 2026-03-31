@@ -13,8 +13,6 @@ body {
 
 body {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
-  background: var(--cp-bg-page);
-  color: var(--cp-text);
 }
 
 nz-card,
@@ -25,16 +23,13 @@ app-login {
 
 .app-layout {
   min-height: 100vh;
-  background: var(--cp-bg-layout);
 }
 
 nz-content {
-  background: var(--cp-bg-layout);
   padding: 24px;
 }
 
 .inner-content {
-  background: var(--cp-white);
   padding: 24px;
   min-height: 280px;
   border-radius: 8px;
