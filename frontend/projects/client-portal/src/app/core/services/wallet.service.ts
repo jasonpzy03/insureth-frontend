@@ -1,14 +1,18 @@
 import { Injectable, signal, PLATFORM_ID, inject } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { BrowserProvider, JsonRpcSigner } from 'ethers';
+import { firstValueFrom } from 'rxjs';
+import { AuthService } from '../../features/auth/services/auth.service';
 
 @Injectable({
   providedIn: 'root'
 })
 export class WalletService {
   private platformId = inject(PLATFORM_ID);
+  private authService = inject(AuthService);
   private provider: BrowserProvider | null = null;
   private _switchingNetwork = false;
+  private readonly tokenStorageKey = 'insureth_auth_token';
 
   // Using Angular Signals for reactive state
   readonly address = signal<string | null>(null);
@@ -16,6 +20,7 @@ export class WalletService {
   readonly isAuthenticated = signal<boolean>(false);
   readonly isConnecting = signal<boolean>(false);
   readonly error = signal<string | null>(null);
+  readonly authToken = signal<string | null>(null);
   // Track if initial check is complete
   readonly isInitialized = signal<boolean>(false);
   readonly isProfileComplete = signal<boolean>(false);
@@ -51,12 +56,14 @@ export class WalletService {
           this.address.set(address);
           this.isConnected.set(true);
 
-          const storedSession = localStorage.getItem('insureth_auth_session');
-          if (storedSession?.toLowerCase() === address.toLowerCase()) {
+          const storedToken = localStorage.getItem(this.tokenStorageKey);
+          if (storedToken && this.getTokenSubject(storedToken)?.toLowerCase() === address.toLowerCase()) {
             this.isAuthenticated.set(true);
-            const profileCompleted = localStorage.getItem('insureth_profile_completed') === 'true';
-            this.isProfileComplete.set(profileCompleted);
+            this.authToken.set(storedToken);
             this.updateState(address);
+            await this.refreshProfileState();
+          } else if (storedToken) {
+            this.clearSession();
           }
         }
       } catch (err) {
@@ -74,17 +81,15 @@ export class WalletService {
           this.address.set(address);
           this.isConnected.set(true);
 
-          const storedSession = localStorage.getItem('insureth_auth_session');
-          if (storedSession?.toLowerCase() === address.toLowerCase()) {
+          const storedToken = localStorage.getItem(this.tokenStorageKey);
+          if (storedToken && this.getTokenSubject(storedToken)?.toLowerCase() === address.toLowerCase()) {
             this.isAuthenticated.set(true);
-            const profileCompleted = localStorage.getItem('insureth_profile_completed') === 'true';
-            this.isProfileComplete.set(profileCompleted);
+            this.authToken.set(storedToken);
             this.updateState(address);
+            void this.refreshProfileState();
           } else {
             // New account, not authenticated yet
-            this.isAuthenticated.set(false);
-            this.isProfileComplete.set(false);
-            localStorage.removeItem('insureth_auth_session');
+            this.clearSession();
           }
         } else {
           this.disconnect();
@@ -105,38 +110,63 @@ export class WalletService {
     return !!(eth && eth.isMetaMask);
   }
 
-  async switchToSepolia(eth: any): Promise<void> {
-    const sepoliaChainId = '0xaa36a7';
+  // === NETWORK CONFIG ===
+  // Hardhat Localhost
+  private readonly TARGET_CHAIN_ID = '0x7a69'; // 31337
 
+  // --- Sepolia (uncomment to switch back) ---
+  // private readonly TARGET_CHAIN_ID = '0xaa36a7'; // 11155111
+
+  async switchToTargetNetwork(eth: any): Promise<void> {
+    this._switchingNetwork = true;
     try {
-      // Try switching network
       await eth.request({
         method: 'wallet_switchEthereumChain',
-        params: [{ chainId: sepoliaChainId }],
+        params: [{ chainId: this.TARGET_CHAIN_ID }],
       });
     } catch (switchError: any) {
-      // If network not added, add it
       if (switchError.code === 4902) {
+        // Hardhat Localhost
         await eth.request({
           method: 'wallet_addEthereumChain',
           params: [
             {
-              chainId: sepoliaChainId,
-              chainName: 'Sepolia Test Network',
+              chainId: this.TARGET_CHAIN_ID,
+              chainName: 'Hardhat Localhost',
               nativeCurrency: {
-                name: 'Sepolia ETH',
+                name: 'ETH',
                 symbol: 'ETH',
                 decimals: 18,
               },
-              rpcUrls: ['https://rpc.sepolia.org'],
-              blockExplorerUrls: ['https://sepolia.etherscan.io'],
+              rpcUrls: ['http://127.0.0.1:8545'],
+              blockExplorerUrls: []
             },
           ],
         });
+
+        // --- Sepolia (uncomment to switch back) ---
+        // await eth.request({
+        //   method: 'wallet_addEthereumChain',
+        //   params: [
+        //     {
+        //       chainId: this.TARGET_CHAIN_ID,
+        //       chainName: 'Sepolia Testnet',
+        //       nativeCurrency: {
+        //         name: 'Sepolia ETH',
+        //         symbol: 'ETH',
+        //         decimals: 18,
+        //       },
+        //       rpcUrls: ['https://sepolia.infura.io/v3/d61c67d521c94cbb9fc3da4b765072f3'],
+        //       blockExplorerUrls: ['https://sepolia.etherscan.io']
+        //     },
+        //   ],
+        // });
       } else {
+        this._switchingNetwork = false;
         throw switchError;
       }
     }
+    this._switchingNetwork = false;
   }
 
   async connect(): Promise<void> {
@@ -152,8 +182,8 @@ export class WalletService {
       const eth = (window as any).ethereum;
       const chainId = await eth.request({ method: 'eth_chainId' });
 
-      if (chainId !== '0xaa36a7') {
-        await this.switchToSepolia(eth); // let it refresh early
+      if (chainId !== this.TARGET_CHAIN_ID) {
+        await this.switchToTargetNetwork(eth);
         return; // stop flow here
       }
 
@@ -170,20 +200,20 @@ export class WalletService {
       // 🔥 Now safe to sign (network will show as Sepolia)
       const signer = await this.provider.getSigner();
 
-      const message = `Welcome to Insureth!\n\n
-      Please sign this message to verify your wallet ownership and log in.\n\n
-      Wallet: ${address}\n
-      Timestamp: ${Date.now()}`;
+      const noncePayload = await firstValueFrom(this.authService.issueClientNonce(address));
+      const message = noncePayload.message;
 
       const signature = await signer.signMessage(message);
 
-      console.log('User successfully signed the login message:', signature);
+      const response = await firstValueFrom(
+        this.authService.loginClientWallet(address, signature, noncePayload.nonce, message)
+      );
 
-      localStorage.setItem('insureth_auth_session', address);
+      localStorage.setItem(this.tokenStorageKey, response.token);
 
+      this.authToken.set(response.token);
       this.isAuthenticated.set(true);
-      const profileCompleted = localStorage.getItem('insureth_profile_completed') === 'true';
-      this.isProfileComplete.set(profileCompleted);
+      this.isProfileComplete.set(response.profileComplete);
 
       this.updateState(address);
 
@@ -208,11 +238,7 @@ export class WalletService {
 
   async disconnect(): Promise<void> {
     // Clear state synchronously immediately to prevent race conditions during navigation
-    localStorage.removeItem('insureth_auth_session');
-    this.address.set(null);
-    this.isConnected.set(false);
-    this.isAuthenticated.set(false);
-    this.isProfileComplete.set(false);
+    this.clearSession();
 
     try {
       if (this.isMetaMaskInstalled()) {
@@ -233,8 +259,45 @@ export class WalletService {
     this.isConnected.set(true);
   }
 
+  private async refreshProfileState() {
+    try {
+      await firstValueFrom(this.authService.getCurrentClientUser());
+      this.isProfileComplete.set(true);
+    } catch (err: any) {
+      if (err?.status === 404) {
+        this.isProfileComplete.set(false);
+        return;
+      }
+      this.clearSession();
+    }
+  }
+
+  private getTokenSubject(token: string): string | null {
+    try {
+      const [, payload] = token.split('.');
+      if (!payload) return null;
+      const decoded = JSON.parse(atob(payload.replace(/-/g, '+').replace(/_/g, '/')));
+      return decoded?.sub ?? null;
+    } catch {
+      return null;
+    }
+  }
+
+  private clearSession() {
+    localStorage.removeItem(this.tokenStorageKey);
+    this.address.set(null);
+    this.isConnected.set(false);
+    this.isAuthenticated.set(false);
+    this.isProfileComplete.set(false);
+    this.authToken.set(null);
+  }
+
   async getSigner(): Promise<JsonRpcSigner | null> {
     if (!this.provider || !this.isConnected()) return null;
     return this.provider.getSigner();
+  }
+
+  getProvider(): BrowserProvider | null {
+    return this.provider;
   }
 }

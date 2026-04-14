@@ -1,0 +1,57 @@
+<div class="audit-trail-shell">
+  <div class="audit-trail-intro">
+    <p class="audit-trail-subtitle">Review wallet sign-ins and backoffice account administration events across the auth service.</p>
+  </div>
+
+  <nz-card class="audit-trail-card">
+    <div class="audit-trail-toolbar">
+      <input
+        nz-input
+        [(ngModel)]="search"
+        (keyup.enter)="applySearch()"
+        placeholder="Search event type, wallet, target, description, or IP"
+        class="audit-trail-search">
+      <button nz-button nzType="default" (click)="applySearch()" [disabled]="isLoading()" [nzLoading]="isLoading()">
+        Search
+      </button>
+    </div>
+
+    <nz-table
+      [nzData]="items()"
+      [nzLoading]="isLoading()"
+      [nzFrontPagination]="false"
+      [nzTotal]="total()"
+      [nzPageIndex]="pageIndex"
+      [nzPageSize]="pageSize"
+      [nzShowSizeChanger]="true"
+      [nzPageSizeOptions]="pageSizeOptions"
+      (nzQueryParams)="onQueryParamsChange({ pageIndex: $event.pageIndex, pageSize: $event.pageSize })">
+      <thead>
+        <tr>
+          <th>When</th>
+          <th>Event</th>
+          <th>Actor</th>
+          <th>Target</th>
+          <th>Description</th>
+          <th>IP</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let item of items()">
+          <td>{{ item.createdAt | date: 'yyyy-MM-dd HH:mm:ss' }}</td>
+          <td>{{ item.eventType }}</td>
+          <td>
+            <div>{{ item.actorWalletAddress || '-' }}</div>
+            <div class="audit-trail-muted">{{ item.actorRole || 'Unknown role' }}</div>
+          </td>
+          <td>
+            <div>{{ item.targetType || '-' }}</div>
+            <div class="audit-trail-muted">{{ item.targetIdentifier || 'No identifier' }}</div>
+          </td>
+          <td>{{ item.description }}</td>
+          <td>{{ item.ipAddress || '-' }}</td>
+        </tr>
+      </tbody>
+    </nz-table>
+  </nz-card>
+</div>

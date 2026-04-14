@@ -1,0 +1,88 @@
+:host {
+  display: block;
+}
+
+.backoffice-login-shell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: calc(100vh - 48px);
+  padding: 2rem 1rem;
+}
+
+.backoffice-login-card.ant-card {
+  width: 100%;
+  max-width: 440px;
+  border-radius: 1.5rem;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  box-shadow: 0 20px 48px rgba(15, 23, 42, 0.08);
+}
+
+.backoffice-login-header {
+  margin-bottom: 2rem;
+  text-align: center;
+}
+
+.backoffice-login-logo {
+  width: 60px;
+  height: 60px;
+  margin: 0 auto 0.75rem;
+}
+
+.backoffice-login-brand {
+  margin: 0;
+  color: #111827;
+  font-size: 1.75rem;
+  font-weight: 900;
+}
+
+.backoffice-login-subtitle {
+  margin: 0.5rem 0 0;
+  color: #6b7280;
+  line-height: 1.6;
+}
+
+.backoffice-login-copy {
+  margin-bottom: 1.25rem;
+}
+
+.backoffice-login-copy h3 {
+  margin: 0 0 0.45rem;
+  color: #111827;
+  font-size: 1.05rem;
+  font-weight: 800;
+}
+
+.backoffice-login-copy p {
+  margin: 0;
+  color: #6b7280;
+  line-height: 1.6;
+}
+
+.backoffice-login-button.ant-btn {
+  margin-top: 0.5rem;
+  height: 50px;
+  border: 0;
+  border-radius: 0.85rem;
+  background: #8732fb;
+  font-weight: 800;
+}
+
+.backoffice-login-button.ant-btn:hover,
+.backoffice-login-button.ant-btn:focus {
+  background: #7220e3;
+}
+
+.backoffice-login-footer {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-top: 1rem;
+  color: #6b7280;
+  font-size: 0.82rem;
+}
+
+.backoffice-login-footer code {
+  color: #8732fb;
+  font-weight: 700;
+}

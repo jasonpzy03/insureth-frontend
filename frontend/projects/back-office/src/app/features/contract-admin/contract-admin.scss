@@ -1,0 +1,127 @@
+.bo-contract-shell {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.bo-contract-intro {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.bo-contract-subtitle {
+  margin: 0;
+  max-width: 60rem;
+  color: #667085;
+  font-size: 0.98rem;
+  line-height: 1.7;
+}
+
+.bo-contract-grid {
+  display: grid;
+  gap: 1.5rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.bo-contract-card {
+  border-radius: 24px;
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  box-shadow: 0 20px 45px rgba(15, 23, 42, 0.08);
+}
+
+.bo-contract-card--wide {
+  grid-column: 1 / -1;
+}
+
+.bo-contract-card__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.bo-contract-card__eyebrow {
+  display: inline-block;
+  margin-bottom: 0.45rem;
+  color: #7c3aed;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.bo-contract-card__header h2 {
+  margin: 0;
+  color: #0f172a;
+  font-size: 1.15rem;
+  font-weight: 700;
+}
+
+.bo-contract-meta {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.bo-contract-meta__label {
+  display: block;
+  margin-bottom: 0.35rem;
+  color: #7c3aed;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.bo-contract-meta p {
+  margin: 0;
+  color: #0f172a;
+  font-size: 0.95rem;
+  line-height: 1.6;
+  word-break: break-all;
+}
+
+.bo-contract-form {
+  display: flex;
+  flex-direction: column;
+}
+
+.bo-contract-form__grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.bo-contract-form__actions {
+  margin-top: 0.5rem;
+}
+
+.bo-contract-inline-actions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.bo-contract-riskkey {
+  font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', monospace;
+  font-size: 0.82rem;
+  color: #475467;
+  word-break: break-all;
+}
+
+.bo-contract-note {
+  margin: 0 0 1rem;
+  color: #667085;
+  line-height: 1.6;
+}
+
+@media (max-width: 960px) {
+  .bo-contract-grid,
+  .bo-contract-form__grid,
+  .bo-contract-meta {
+    grid-template-columns: 1fr;
+  }
+}

@@ -1,6 +1,5 @@
 import {NgModule} from '@angular/core';
 import {CommonModule} from '@angular/common';
-import {HttpClientModule} from '@angular/common/http';
 import {AuthService} from './services/auth.service';
 import {LoginPage} from './pages/login/login';
 import {NzButtonModule} from 'ng-zorro-antd/button';
@@ -18,7 +17,6 @@ import {SignupPage} from './pages/signup/signup';
   declarations: [LoginPage, SignupPage],
   imports: [
     CommonModule,
-    HttpClientModule,
     NzButtonModule,
     NzCardModule,
     NzIconModule,

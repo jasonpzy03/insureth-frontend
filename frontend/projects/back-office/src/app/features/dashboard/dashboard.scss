@@ -1,0 +1,54 @@
+.bo-dashboard-subtitle {
+  margin: 0 0 1.5rem;
+  color: #6b7280;
+  font-size: 1rem;
+  line-height: 1.7;
+}
+
+.bo-dashboard-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.bo-dashboard-card.ant-card {
+  border-radius: 1.25rem;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.05);
+}
+
+.bo-dashboard-card__eyebrow {
+  color: #8b5cf6;
+  font-size: 0.75rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+}
+
+.bo-dashboard-card h2 {
+  margin: 0.75rem 0 0.35rem;
+  color: #111827;
+  font-size: 1.5rem;
+  font-weight: 900;
+}
+
+.bo-dashboard-card p,
+.bo-dashboard-card li {
+  color: #6b7280;
+  line-height: 1.6;
+}
+
+.bo-dashboard-card--wide {
+  grid-column: 1 / -1;
+}
+
+.bo-dashboard-card ul {
+  margin: 0.5rem 0 0;
+  padding-left: 1.2rem;
+}
+
+@media (max-width: 768px) {
+  .bo-dashboard-grid {
+    grid-template-columns: 1fr;
+  }
+}

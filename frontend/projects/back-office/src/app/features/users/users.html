@@ -1,0 +1,100 @@
+<div class="bo-users-shell">
+  <div class="bo-users-intro">
+    <p class="bo-users-subtitle">Authorize internal wallets, assign roles, and manage who can access the back-office workspace.</p>
+  </div>
+
+  <div class="bo-users-grid">
+    <nz-card class="bo-users-card">
+      <div class="bo-users-card__header">
+        <div>
+          <span class="bo-users-card__eyebrow">Create User</span>
+          <h2>New Backoffice User</h2>
+        </div>
+      </div>
+
+      <nz-alert
+        *ngIf="error()"
+        class="mb-4"
+        nzType="error"
+        [nzMessage]="error() || ''"
+        nzShowIcon>
+      </nz-alert>
+
+      <form nz-form [formGroup]="createUserForm" (ngSubmit)="submit()" class="bo-users-form">
+        <nz-form-item>
+          <nz-form-label [nzSpan]="24" nzFor="username">Username</nz-form-label>
+          <nz-form-control [nzSpan]="24" nzErrorTip="Enter a username with at least 3 characters.">
+            <input id="username" nz-input formControlName="username" placeholder="ops.lead">
+          </nz-form-control>
+        </nz-form-item>
+
+        <nz-form-item>
+          <nz-form-label [nzSpan]="24" nzFor="email">Email</nz-form-label>
+          <nz-form-control [nzSpan]="24" nzErrorTip="Enter a valid email address.">
+            <input id="email" nz-input formControlName="email" placeholder="ops@insureth.local">
+          </nz-form-control>
+        </nz-form-item>
+
+        <nz-form-item>
+          <nz-form-label [nzSpan]="24" nzFor="walletAddress">Wallet Address</nz-form-label>
+          <nz-form-control [nzSpan]="24" nzErrorTip="Enter the wallet that should be allowed into back-office.">
+            <input id="walletAddress" nz-input formControlName="walletAddress" placeholder="0x...">
+          </nz-form-control>
+        </nz-form-item>
+
+        <nz-form-item>
+          <nz-form-label [nzSpan]="24" nzFor="role">Role</nz-form-label>
+          <nz-form-control [nzSpan]="24">
+            <nz-select id="role" formControlName="role">
+              <nz-option *ngFor="let role of roleOptions" [nzLabel]="role" [nzValue]="role"></nz-option>
+            </nz-select>
+          </nz-form-control>
+        </nz-form-item>
+
+        <div class="bo-users-form__actions">
+          <button nz-button nzType="primary" [disabled]="isSubmitting()" [nzLoading]="isSubmitting()">
+            Create User
+          </button>
+        </div>
+      </form>
+    </nz-card>
+
+    <nz-card class="bo-users-card bo-users-card--wide">
+      <div class="bo-users-card__header">
+        <div>
+          <span class="bo-users-card__eyebrow">Directory</span>
+          <h2>Authorized Backoffice Users</h2>
+        </div>
+        <button nz-button nzType="default" (click)="loadUsers()" [disabled]="isLoading()" [nzLoading]="isLoading()">
+          Refresh
+        </button>
+      </div>
+
+      <nz-table
+        [nzData]="users()"
+        [nzFrontPagination]="false"
+        [nzLoading]="isLoading()"
+        [nzShowPagination]="false">
+        <thead>
+          <tr>
+            <th>Username</th>
+            <th>Email</th>
+            <th>Wallet</th>
+            <th>Role</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let user of users()">
+            <td>{{ user.username }}</td>
+            <td>{{ user.email }}</td>
+            <td class="bo-users-wallet">{{ user.walletAddress }}</td>
+            <td>{{ user.role }}</td>
+          </tr>
+          <tr *ngIf="!users().length && !isLoading()">
+            <td colspan="4" class="bo-users-empty">No backoffice users found.</td>
+          </tr>
+        </tbody>
+      </nz-table>
+    </nz-card>
+  </div>
+</div>

@@ -59,18 +59,12 @@ export class SignupPage {
         tap((res) => {
           // assuming success = user created
           this.walletService.isProfileComplete.set(true);
-          localStorage.setItem('insureth_profile_completed', 'true');
 
           this.router.navigate(['/dashboard'], { replaceUrl: true });
         })
       )
       .subscribe({
-        error: (err) => {
-          console.error('Create user failed:', err);
-
-          // optional UX improvement
-          // show error message here (NzAlert, toast, etc.)
-        }
+        error: () => {}
       });
   }
 }

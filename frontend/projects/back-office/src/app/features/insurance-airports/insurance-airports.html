@@ -1,0 +1,51 @@
+<div class="insurance-admin-shell">
+  <div class="insurance-admin-intro">
+    <p class="insurance-admin-subtitle">Review airports available in the insurance catalog and decide which ones are supported.</p>
+  </div>
+
+  <nz-card class="insurance-admin-card">
+    <div class="insurance-admin-toolbar">
+      <input
+        nz-input
+        [(ngModel)]="search"
+        (keyup.enter)="applySearch()"
+        placeholder="Search airport name, IATA, or ICAO"
+        class="insurance-admin-search">
+      <button nz-button nzType="default" (click)="applySearch()" [disabled]="isLoading()" [nzLoading]="isLoading()">
+        Search
+      </button>
+    </div>
+
+    <nz-table
+      [nzData]="items()"
+      [nzLoading]="isLoading()"
+      [nzFrontPagination]="false"
+      [nzTotal]="total()"
+      [nzPageIndex]="pageIndex"
+      [nzPageSize]="pageSize"
+      [nzShowSizeChanger]="true"
+      [nzPageSizeOptions]="pageSizeOptions"
+      (nzQueryParams)="onQueryParamsChange({ pageIndex: $event.pageIndex, pageSize: $event.pageSize })">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>IATA</th>
+          <th>ICAO</th>
+          <th>Supported</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let airport of items()">
+          <td>{{ airport.name }}</td>
+          <td>{{ airport.iataCode }}</td>
+          <td>{{ airport.icaoCode }}</td>
+          <td>{{ airport.supportedForFlightInsurance ? 'Yes' : 'No' }}</td>
+          <td>
+            <button nz-button nzType="link" (click)="openAirport(airport.airportId)">Manage</button>
+          </td>
+        </tr>
+      </tbody>
+    </nz-table>
+  </nz-card>
+</div>

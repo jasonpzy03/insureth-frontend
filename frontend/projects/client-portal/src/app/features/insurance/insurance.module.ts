@@ -1,19 +1,41 @@
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterLink } from '@angular/router';
+import { RouterModule } from '@angular/router';
+import { ReactiveFormsModule } from '@angular/forms';
 import { NzIconModule } from 'ng-zorro-antd/icon';
-import { FlightInsurancePage } from './pages/flight-insurance/flight-insurance';
-import {NzCardComponent} from 'ng-zorro-antd/card';
+import { NzCardModule } from 'ng-zorro-antd/card';
+import { NzButtonModule } from 'ng-zorro-antd/button';
+import { NzFormModule } from 'ng-zorro-antd/form';
+import { NzInputModule } from 'ng-zorro-antd/input';
+import { NzSelectModule } from 'ng-zorro-antd/select';
+import { NzDatePickerModule } from 'ng-zorro-antd/date-picker';
+import { NzSkeletonModule } from 'ng-zorro-antd/skeleton';
+import { FlightInsuranceLandingPage } from './flight-insurance/pages/flight-insurance-landing/flight-insurance-landing';
+import { PurchasePage } from './flight-insurance/pages/purchase/purchase';
+import { NzTagModule } from 'ng-zorro-antd/tag';
 
 @NgModule({
-    declarations: [FlightInsurancePage],
+  declarations: [
+    FlightInsuranceLandingPage,
+    PurchasePage,
+  ],
   imports: [
     CommonModule,
-    RouterLink,
+    RouterModule,
+    ReactiveFormsModule,
     NzIconModule,
-    NzCardComponent
+    NzCardModule,
+    NzButtonModule,
+    NzFormModule,
+    NzInputModule,
+    NzSelectModule,
+    NzDatePickerModule,
+    NzSkeletonModule,
+    NzTagModule,
   ],
-    providers: [],
-    exports: [FlightInsurancePage],
+  exports: [
+    FlightInsuranceLandingPage,
+    PurchasePage,
+  ],
 })
 export class InsuranceModule { }

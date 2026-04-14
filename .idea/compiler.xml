@@ -1,13 +1,30 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
+  <component name="CompilerConfiguration">
+    <bytecodeTargetLevel>
+      <module name="bo-gateway" target="21" />
+      <module name="bo-gateway.main" target="21" />
+      <module name="bo-gateway.test" target="21" />
+      <module name="com.insureth.cp-gateway.main" target="21" />
+      <module name="com.insureth.cp-gateway.test" target="21" />
+      <module name="cp-gateway" target="21" />
+      <module name="cp-gateway.main" target="21" />
+      <module name="cp-gateway.test" target="21" />
+    </bytecodeTargetLevel>
+  </component>
   <component name="JavacSettings">
     <option name="ADDITIONAL_OPTIONS_OVERRIDE">
       <module name="bo-gateway" options="-parameters" />
       <module name="bo-gateway.main" options="-parameters" />
       <module name="bo-gateway.test" options="-parameters" />
+      <module name="com.insureth.cp-gateway.main" options="-parameters" />
+      <module name="com.insureth.cp-gateway.test" options="-parameters" />
       <module name="cp-gateway" options="-parameters" />
       <module name="cp-gateway.main" options="-parameters" />
       <module name="cp-gateway.test" options="-parameters" />
+      <module name="gateway" options="-parameters" />
+      <module name="gateway.main" options="-parameters" />
+      <module name="gateway.test" options="-parameters" />
     </option>
   </component>
 </project>

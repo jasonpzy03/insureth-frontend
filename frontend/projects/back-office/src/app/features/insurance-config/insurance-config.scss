@@ -1,0 +1,115 @@
+.insurance-config-shell {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.insurance-config-subtitle {
+  margin: 0;
+  color: #667085;
+  font-size: 0.98rem;
+}
+
+.insurance-config-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+}
+
+.insurance-config-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1.5rem;
+}
+
+.insurance-config-card {
+  border-radius: 1rem;
+}
+
+.insurance-config-card--wide {
+  grid-column: 1 / -1;
+}
+
+.insurance-config-card__header {
+  margin-bottom: 1rem;
+}
+
+.insurance-config-card__header h2 {
+  margin: 0.25rem 0 0;
+  font-size: 1.15rem;
+}
+
+.insurance-config-card__eyebrow {
+  color: #7c3aed;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.insurance-config-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0 1rem;
+}
+
+.insurance-config-form-grid__span-2 {
+  grid-column: 1 / -1;
+}
+
+.insurance-config-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.insurance-config-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.insurance-config-routes-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.insurance-config-routes-header h3 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.insurance-config-routes-header p {
+  margin: 0.25rem 0 0;
+  color: #667085;
+}
+
+.insurance-config-routes-actions {
+  text-align: right;
+}
+
+.insurance-config-empty {
+  color: #98a2b3;
+  padding: 1rem 0;
+  text-align: center;
+}
+
+@media (max-width: 960px) {
+  .insurance-config-grid,
+  .insurance-config-form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .insurance-config-card--wide,
+  .insurance-config-form-grid__span-2 {
+    grid-column: auto;
+  }
+
+  .insurance-config-actions,
+  .insurance-config-routes-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}

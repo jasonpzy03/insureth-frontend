@@ -1,0 +1,44 @@
+:host ::ng-deep .dashboard-action-button.ant-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  line-height: 1;
+}
+
+:host ::ng-deep .dashboard-action-button.ant-btn > span {
+  display: inline-flex;
+  align-items: center;
+  line-height: 1;
+}
+
+:host ::ng-deep .dashboard-action-button.ant-btn .anticon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  vertical-align: middle;
+  line-height: 1;
+  font-size: 1em;
+}
+
+:host ::ng-deep .dashboard-action-button.ant-btn .anticon svg {
+  display: block;
+}
+
+:host ::ng-deep .dashboard-action-button.ant-btn > span + span {
+  margin-inline-start: 0;
+}
+
+:host ::ng-deep .withdraw-amount-input.ant-input-number {
+  width: 100%;
+}
+
+:host ::ng-deep .withdraw-amount-input.ant-input-number .ant-input-number-input-wrap {
+  height: 2.75rem;
+}
+
+:host ::ng-deep .withdraw-amount-input.ant-input-number input {
+  height: 2.75rem;
+  padding: 0 0.875rem;
+  font-size: 1rem;
+}

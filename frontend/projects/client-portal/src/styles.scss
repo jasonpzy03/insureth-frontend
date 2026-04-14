@@ -1,6 +1,4 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
 
 /* Global Layout & Host Fixes */
 html,
@@ -15,12 +13,6 @@ body {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
 }
 
-nz-card,
-app-header,
-app-login {
-  display: block;
-}
-
 .app-layout {
   min-height: 100vh;
 }
@@ -33,4 +25,51 @@ nz-content {
   padding: 24px;
   min-height: 280px;
   border-radius: 8px;
+}
+
+/* Hide horizontal menu active underline specifically for marked tabs */
+.no-underline-tab::after {
+  border-bottom: 0 !important;
+}
+
+/* Prevent the dropdown text from staying colored when routed or cached */
+.no-underline-tab.ant-menu-submenu-selected>.ant-menu-submenu-title,
+.no-underline-tab.ant-menu-submenu-active>.ant-menu-submenu-title {
+  color: rgba(0, 0, 0, 0.85) !important;
+}
+
+/* Ensure raw mouse-hover still highlights the tab naturally */
+.no-underline-tab.ant-menu-submenu:hover>.ant-menu-submenu-title,
+.no-underline-tab.ant-menu-submenu-selected:hover>.ant-menu-submenu-title {
+  color: #8732fb !important;
+}
+
+/* Force standard 8px popup windows globally to fix the 32px theme bleed */
+.ant-menu-submenu-popup .ant-menu,
+.ant-dropdown-menu,
+.ant-select-dropdown {
+  border-radius: 8px !important;
+}
+
+/* Prevent inner dropdown UI elements from staying permanently highlighted when routed */
+.ant-menu-submenu-popup .ant-menu-item-selected,
+.ant-dropdown-menu .ant-menu-item-selected {
+  background-color: transparent !important;
+  color: rgba(0, 0, 0, 0.85) !important;
+}
+
+/* Ensure mouse-hover still works normally on dropdown items */
+.ant-menu-submenu-popup .ant-menu-item:hover,
+.ant-dropdown-menu .ant-menu-item:hover,
+.ant-menu-submenu-popup .ant-menu-item-selected:hover,
+.ant-dropdown-menu .ant-menu-item-selected:hover {
+  background-color: rgba(0, 0, 0, 0.04) !important;
+  color: #8732fb !important;
+}
+
+/* Fix global input field height clipping for letters like 'j', 'g', 'y' */
+.ant-input {
+  min-height: 40px !important;
+  padding: 8px 12px !important;
+  font-size: 16px !important;
 }

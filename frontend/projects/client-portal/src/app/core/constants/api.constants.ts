@@ -4,6 +4,11 @@ export const API = {
   VERSION: 'v1',
   BASE_URL: 'api/v1',
 
+
+  AUTH: 'auth',
   CP_USERS: 'cp-users',
-  AUTH: 'auth'
+  CLIENT: 'client',
+
+  INSURANCE: 'insurance',
+  FLIGHT_INSURANCE: 'flightinsurance'
 };

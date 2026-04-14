@@ -47,8 +47,8 @@
               "budgets": [
                 {
                   "type": "initial",
-                  "maximumWarning": "500kB",
-                  "maximumError": "1MB"
+                  "maximumWarning": "3MB",
+                  "maximumError": "4MB"
                 },
                 {
                   "type": "anyComponentStyle",
@@ -130,6 +130,7 @@
               }
             ],
             "styles": [
+              "projects/back-office/src/theme.less",
               "projects/back-office/src/styles.scss"
             ]
           },
@@ -138,8 +139,8 @@
               "budgets": [
                 {
                   "type": "initial",
-                  "maximumWarning": "500kB",
-                  "maximumError": "1MB"
+                  "maximumWarning": "3MB",
+                  "maximumError": "4MB"
                 },
                 {
                   "type": "anyComponentStyle",
@@ -188,6 +189,7 @@
               }
             ],
             "styles": [
+              "projects/back-office/src/theme.less",
               "projects/back-office/src/styles.scss"
             ]
           }

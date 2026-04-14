@@ -1,4 +1,170 @@
-<div class="p-6">
-  <h2 class="text-2xl font-bold mb-4">Dashboard</h2>
-  <p class="text-gray-600">This is the dashboard feature placeholder.</p>
+<div class="p-6 md:p-10 max-w-7xl mx-auto">
+  <div class="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-4 mb-8">
+    <p class="text-gray-500 font-medium m-0 max-w-3xl">A summary of your active coverage, claim outcomes, premiums paid, and recent policy activity.</p>
+    <div class="flex flex-wrap gap-3">
+      <button nz-button nzType="default" routerLink="/policies" class="rounded-lg h-10 font-bold">
+        <span nz-icon nzType="link"></span> View All Policies
+      </button>
+      <button nz-button nzType="primary" routerLink="/insurance/flight-insurance/purchase" class="rounded-lg h-10 font-bold bg-[#8732fb] border-[#8732fb] hover:bg-[#7220e3] hover:border-[#7220e3]">
+        <span nz-icon nzType="plus"></span> Buy New Policy
+      </button>
+    </div>
+  </div>
+
+  <nz-skeleton [nzLoading]="isLoading" [nzActive]="true" [nzParagraph]="{ rows: 10 }"></nz-skeleton>
+
+  <div *ngIf="!isLoading">
+    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-6 mb-8">
+      <nz-card class="shadow-sm border-0 rounded-2xl overflow-hidden bg-white">
+        <div class="flex flex-col">
+          <span class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Active Policies</span>
+          <div class="flex items-end gap-2">
+            <span class="text-4xl font-black text-gray-800">{{activePolicies}}</span>
+          </div>
+          <span class="text-xs font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded inline-flex w-max mt-3">Currently protected</span>
+        </div>
+      </nz-card>
+
+      <nz-card class="shadow-sm border-0 rounded-2xl overflow-hidden bg-white">
+        <div class="flex flex-col">
+          <span class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Claimed Policies</span>
+          <div class="flex items-end gap-2">
+            <span class="text-4xl font-black text-gray-800">{{claimedPolicies}}</span>
+          </div>
+          <span class="text-xs font-bold text-emerald-600 bg-emerald-50 px-2 py-1 rounded inline-flex w-max mt-3">Paid out successfully</span>
+        </div>
+      </nz-card>
+
+      <nz-card class="shadow-sm border-0 rounded-2xl overflow-hidden bg-white">
+        <div class="flex flex-col">
+          <span class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Total Premium Paid</span>
+          <div class="flex items-end gap-2">
+            <span class="text-4xl font-black text-gray-800">{{totalPremiumPaid | number:'1.2-6'}}</span>
+            <span class="text-xl font-bold text-gray-400 mb-1">ETH</span>
+          </div>
+          <span class="text-xs font-bold text-gray-400 bg-gray-50 px-2 py-1 rounded inline-flex w-max mt-3">Across all policies</span>
+        </div>
+      </nz-card>
+
+      <nz-card class="shadow-sm border-0 rounded-2xl overflow-hidden bg-white">
+        <div class="flex flex-col">
+          <span class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Total Disbursed</span>
+          <div class="flex items-end gap-2">
+            <span class="text-4xl font-black text-emerald-600">{{totalDisbursed | number:'1.2-6'}}</span>
+            <span class="text-xl font-bold text-gray-400 mb-1">ETH</span>
+          </div>
+          <span class="text-xs font-bold text-emerald-600 bg-emerald-50 px-2 py-1 rounded inline-flex w-max mt-3">Payouts received</span>
+        </div>
+      </nz-card>
+
+      <nz-card class="shadow-sm border-0 rounded-2xl overflow-hidden bg-white">
+        <div class="flex flex-col">
+          <span class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Awaiting Verification</span>
+          <div class="flex items-end gap-2">
+            <span class="text-4xl font-black text-amber-600">{{pendingVerification}}</span>
+          </div>
+          <span class="text-xs font-bold text-amber-600 bg-amber-50 px-2 py-1 rounded inline-flex w-max mt-3">Waiting on outcome</span>
+        </div>
+      </nz-card>
+    </div>
+
+    <div class="grid grid-cols-1 xl:grid-cols-[minmax(0,1.6fr)_minmax(20rem,0.9fr)] gap-6">
+      <nz-card class="shadow-sm border-0 rounded-2xl overflow-hidden" [nzBodyStyle]="{padding: '0'}">
+        <div class="px-6 py-5 border-b border-gray-100 flex items-center justify-between gap-3">
+          <div>
+            <h3 class="text-xl font-black text-gray-800 m-0">Recent Policies</h3>
+            <p class="text-sm text-gray-500 mt-1 mb-0">Your latest coverage positions and current resolution status.</p>
+          </div>
+          <button nz-button nzType="default" routerLink="/policies" class="rounded-lg font-bold">Open Policies</button>
+        </div>
+
+        <nz-table [nzData]="recentPolicies" [nzShowPagination]="false">
+          <thead>
+            <tr class="bg-gray-50 border-none">
+              <th class="font-bold text-gray-500 uppercase tracking-wider text-xs">Policy</th>
+              <th class="font-bold text-gray-500 uppercase tracking-wider text-xs">Departure</th>
+              <th class="font-bold text-gray-500 uppercase tracking-wider text-xs">Premium</th>
+              <th class="font-bold text-gray-500 uppercase tracking-wider text-xs">Payout</th>
+              <th class="font-bold text-gray-500 uppercase tracking-wider text-xs">Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let policy of recentPolicies" class="hover:bg-gray-50 transition-colors cursor-pointer" [routerLink]="['/policies', policy.policyId]">
+              <td class="py-4">
+                <div class="flex flex-col">
+                  <span class="font-black text-gray-800">{{policy.flightNumber}}</span>
+                  <span class="text-xs font-medium text-gray-400">{{policy.origin}} -> {{policy.destination}}</span>
+                </div>
+              </td>
+              <td class="py-4 text-gray-600 font-medium">{{policy.departureTime | date:'medium'}}</td>
+              <td class="py-4"><span class="font-black text-gray-800">{{policy.premiumPaid || policy.premium}} ETH</span></td>
+              <td class="py-4"><span class="font-black text-emerald-600">{{policy.payoutAmount}} ETH</span></td>
+              <td class="py-4">
+                <nz-tag [nzColor]="getStatusColor(policy)">{{getStatusText(policy)}}</nz-tag>
+              </td>
+            </tr>
+            <tr *ngIf="recentPolicies.length === 0">
+              <td colspan="5" class="text-center py-10 text-gray-400 font-medium">
+                You haven't purchased any policies yet.
+              </td>
+            </tr>
+          </tbody>
+        </nz-table>
+      </nz-card>
+
+      <div class="grid grid-cols-1 gap-6">
+        <nz-card class="shadow-sm border-0 rounded-2xl overflow-hidden">
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="text-xl font-black text-gray-800 m-0">Claims Activity</h3>
+            <span class="text-xs font-bold text-gray-400 uppercase tracking-widest">Recent</span>
+          </div>
+
+          <div class="flex flex-col gap-4">
+            <div *ngFor="let activity of recentActivities" class="flex gap-3 items-start">
+              <div class="w-10 h-10 rounded-full flex items-center justify-center"
+                [class]="activity.tone === 'emerald' ? 'bg-emerald-50 text-emerald-600' : 'bg-blue-50 text-blue-600'">
+                <span nz-icon [nzType]="activity.type === 'PAYOUT' ? 'wallet' : 'shopping-cart'"></span>
+              </div>
+              <div class="min-w-0 flex-1">
+                <div class="flex items-center justify-between gap-3">
+                  <span class="font-black text-gray-800">{{activity.title}}</span>
+                  <span class="font-black" [class]="activity.tone === 'emerald' ? 'text-emerald-600' : 'text-blue-600'">
+                    {{activity.amount}} ETH
+                  </span>
+                </div>
+                <p class="text-sm text-gray-500 mb-1">{{activity.subtitle}}</p>
+                <p class="text-xs text-gray-400 mb-0">Policy #{{activity.policyId}} • {{activity.timestamp | date:'medium'}}</p>
+              </div>
+            </div>
+
+            <div *ngIf="recentActivities.length === 0" class="rounded-xl border border-dashed border-gray-200 bg-gray-50 p-6 text-sm font-medium text-gray-400 text-center">
+              Activity will appear here once you buy policies and claim events are resolved.
+            </div>
+          </div>
+        </nz-card>
+
+        <nz-card class="shadow-sm border-0 rounded-2xl overflow-hidden">
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="text-xl font-black text-gray-800 m-0">Quick Actions</h3>
+            <span class="text-xs font-bold text-gray-400 uppercase tracking-widest">Shortcuts</span>
+          </div>
+
+          <div class="grid grid-cols-1 gap-3">
+            <button nz-button nzType="primary" routerLink="/insurance/flight-insurance/purchase" class="dashboard-summary-button rounded-xl h-12 font-bold bg-[#8732fb] border-[#8732fb] hover:bg-[#7220e3] hover:border-[#7220e3]">
+              <span nz-icon nzType="plus"></span>
+              <span>Buy New Policy</span>
+            </button>
+            <button nz-button nzType="default" routerLink="/policies" class="dashboard-summary-button rounded-xl h-12 font-bold">
+              <span nz-icon nzType="shopping-cart"></span>
+              <span>Manage Policies</span>
+            </button>
+            <button nz-button nzType="default" routerLink="/investor/dashboard" class="dashboard-summary-button rounded-xl h-12 font-bold">
+              <span nz-icon nzType="bank"></span>
+              <span>Investor Dashboard</span>
+            </button>
+          </div>
+        </nz-card>
+      </div>
+    </div>
+  </div>
 </div>

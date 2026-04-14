@@ -1,0 +1,211 @@
+<div class="purchase-shell">
+  <div class="purchase-header">
+    <div class="purchase-header__icon">
+      <span nz-icon nzType="shopping-cart" nzTheme="outline"></span>
+    </div>
+    <div class="purchase-header__copy">
+      <p class="purchase-header__subtitle">Enter your flight details to retrieve an itinerary preview and proceed with coverage.</p>
+    </div>
+  </div>
+
+  <nz-card
+    *ngIf="!flightSchedule"
+    class="purchase-card">
+    <nz-skeleton [nzLoading]="isLoading" [nzActive]="true" [nzParagraph]="{ rows: 11 }">
+      <form nz-form [formGroup]="purchaseForm" (ngSubmit)="submitForm()" nzLayout="vertical" class="purchase-form">
+        <div class="purchase-form__grid">
+          <nz-form-item>
+            <nz-form-label [nzSm]="24" nzRequired nzFor="airline">Airline</nz-form-label>
+            <nz-form-control [nzSm]="24" nzErrorTip="Please select your airline!">
+              <nz-select id="airline" formControlName="airline" nzShowSearch nzAllowClear nzPlaceHolder="Select an airline" nzSize="large">
+                <nz-option *ngFor="let a of airlines" [nzValue]="a.iataCode" [nzLabel]="a.name + ' (' + a.iataCode + ')'"></nz-option>
+              </nz-select>
+            </nz-form-control>
+          </nz-form-item>
+
+          <nz-form-item>
+            <nz-form-label [nzSm]="24" nzRequired nzFor="flightNumber">Flight Number</nz-form-label>
+            <nz-form-control [nzSm]="24" nzErrorTip="Please input your flight number!">
+              <input nz-input id="flightNumber" formControlName="flightNumber" placeholder="e.g. 1234" nzSize="large" />
+            </nz-form-control>
+          </nz-form-item>
+
+          <nz-form-item>
+            <nz-form-label [nzSm]="24" nzRequired nzFor="departureAirport">Departure Airport</nz-form-label>
+            <nz-form-control [nzSm]="24" nzErrorTip="Please select your departure airport!">
+              <nz-select id="departureAirport" formControlName="departureAirport" nzShowSearch nzAllowClear nzPlaceHolder="Select departure airport" nzSize="large">
+                <nz-option *ngFor="let a of airports" [nzValue]="a.iataCode" [nzLabel]="a.name + ' (' + a.iataCode + ')'"></nz-option>
+              </nz-select>
+            </nz-form-control>
+          </nz-form-item>
+
+          <nz-form-item>
+            <nz-form-label [nzSm]="24" nzRequired nzFor="departureDate">Departure Date</nz-form-label>
+            <nz-form-control [nzSm]="24" nzErrorTip="Please select your departure date!">
+              <nz-date-picker
+                id="departureDate"
+                formControlName="departureDate"
+                [nzDisabledDate]="disabledDate"
+                [nzShowToday]="false"
+                class="w-full"
+                nzSize="large">
+              </nz-date-picker>
+            </nz-form-control>
+          </nz-form-item>
+        </div>
+
+        <div class="purchase-form__footer">
+          <div class="purchase-note">
+            Coverage is purchased before departure and payout eligibility is determined by verified flight outcomes.
+          </div>
+          <button nz-button nzType="primary" nzSize="large" [nzLoading]="isSearching" class="purchase-primary-button">
+            Get Quote
+          </button>
+        </div>
+      </form>
+    </nz-skeleton>
+  </nz-card>
+
+  <div *ngIf="flightSchedule" class="purchase-quote">
+    <nz-card class="purchase-card">
+      <div class="quote-header">
+        <div>
+          <p class="quote-header__eyebrow">Flight Itinerary</p>
+          <h2 class="quote-header__title">{{ flightSchedule.flightIATA }}</h2>
+        </div>
+        <nz-tag [nzColor]="'#8732fb'" class="quote-header__tag">{{ flightSchedule.departureAirportIATA }} to {{ flightSchedule.arrivalAirportIATA }}</nz-tag>
+      </div>
+
+      <div class="itinerary-grid">
+        <div class="itinerary-point">
+          <span class="itinerary-point__code">{{ flightSchedule.departureAirportIATA }}</span>
+          <span class="itinerary-point__name" [title]="flightSchedule.departureAirportName">{{ flightSchedule.departureAirportName }}</span>
+          <span class="itinerary-point__time">{{ flightSchedule.departureTime | date:'MMM d, HH:mm' }}</span>
+        </div>
+
+        <div class="itinerary-divider">
+          <div class="itinerary-divider__line"></div>
+          <span nz-icon nzType="send" nzTheme="outline" class="itinerary-divider__icon"></span>
+        </div>
+
+        <div class="itinerary-point">
+          <span class="itinerary-point__code">{{ flightSchedule.arrivalAirportIATA }}</span>
+          <span class="itinerary-point__name" [title]="flightSchedule.arrivalAirportName">{{ flightSchedule.arrivalAirportName }}</span>
+          <span class="itinerary-point__time">{{ flightSchedule.arrivalTime | date:'MMM d, HH:mm' }}</span>
+        </div>
+      </div>
+    </nz-card>
+
+    <nz-card class="purchase-card purchase-card--soft">
+      <div class="coverage-header">
+        <div>
+          <p class="quote-header__eyebrow">Coverage Summary</p>
+          <h3 class="coverage-header__title">On-chain Protection</h3>
+        </div>
+        <div class="coverage-price">
+          <span class="coverage-price__label">Premium</span>
+          <span class="coverage-price__value">{{ premiumDisplay }}</span>
+        </div>
+      </div>
+
+      <div class="coverage-list" *ngIf="quote">
+        <div class="coverage-row">
+          <div class="coverage-row__detail">
+            <span class="coverage-row__icon coverage-row__icon--purple">
+              <i nz-icon nzType="history"></i>
+            </span>
+            <div>
+              <div class="coverage-row__title">Backend Price Inputs</div>
+              <div class="coverage-row__meta">
+                {{ quote.quoteSource === 'DATABASE' ? 'Retrieved from cached flight performance data' : 'Fetched from external flight performance API' }}
+              </div>
+            </div>
+          </div>
+          <span class="coverage-row__amount">
+            {{ quote.allStars | number:'1.1-2' }} stars
+          </span>
+        </div>
+
+        <div class="coverage-row">
+          <div class="coverage-row__detail">
+            <span class="coverage-row__icon coverage-row__icon--amber">
+              <i nz-icon nzType="clock-circle"></i>
+            </span>
+            <div>
+              <div class="coverage-row__title">Delay Risk Signals</div>
+              <div class="coverage-row__meta">
+                On-time {{ quote.ontimePercent | percent:'1.0-0' }}, mean delay {{ quote.delayMeanMinutes | number:'1.0-2' }} min
+              </div>
+            </div>
+          </div>
+          <span class="coverage-row__amount">x{{ quote.performanceMultiplier | number:'1.2-2' }}</span>
+        </div>
+      </div>
+
+      <div class="coverage-list">
+        <div class="coverage-row">
+          <div class="coverage-row__detail">
+            <span class="coverage-row__icon coverage-row__icon--purple">
+              <i nz-icon nzType="wallet"></i>
+            </span>
+            <div>
+              <div class="coverage-row__title">Total Amount Paid</div>
+              <div class="coverage-row__meta">This is the amount charged to purchase coverage</div>
+            </div>
+          </div>
+          <span class="coverage-row__amount">{{ premiumDisplay }}</span>
+        </div>
+
+        <div class="coverage-row">
+          <div class="coverage-row__detail">
+            <span class="coverage-row__icon coverage-row__icon--blue">
+              <i nz-icon nzType="info-circle"></i>
+            </span>
+            <div>
+              <div class="coverage-row__title">{{ feeLabel }}</div>
+              <div class="coverage-row__meta">Paid to the platform and not retained as insured premium</div>
+            </div>
+          </div>
+          <span class="coverage-row__amount">{{ premiumFeeDisplay }}</span>
+        </div>
+
+        <div class="coverage-row">
+          <div class="coverage-row__detail">
+            <span class="coverage-row__icon coverage-row__icon--green">
+              <i nz-icon nzType="safety-certificate"></i>
+            </span>
+            <div>
+              <div class="coverage-row__title">Insured Premium</div>
+              <div class="coverage-row__meta">Used to determine payouts under the smart contract rules</div>
+            </div>
+          </div>
+          <span class="coverage-row__amount">{{ netPremiumDisplay }}</span>
+        </div>
+      </div>
+
+      <div class="coverage-list">
+        <div class="coverage-row" *ngFor="let delayRow of delayCoverageRows">
+          <div class="coverage-row__detail">
+            <span class="coverage-row__icon coverage-row__icon--amber">
+              <i nz-icon nzType="clock-circle"></i>
+            </span>
+            <div>
+              <div class="coverage-row__title">{{ delayRow.label }}</div>
+              <div class="coverage-row__meta">{{ delayRow.meta }}</div>
+            </div>
+          </div>
+          <span class="coverage-row__amount">{{ delayRow.amount }}</span>
+        </div>
+      </div>
+
+      <div class="coverage-footer">
+        <button nz-button nzType="default" (click)="resetForm()" class="purchase-secondary-button">
+          Modify Flight Details
+        </button>
+        <button nz-button nzType="primary" [nzLoading]="isBuying" (click)="buyPolicy()" class="purchase-primary-button">
+          Purchase Policy
+        </button>
+      </div>
+    </nz-card>
+  </div>
+</div>

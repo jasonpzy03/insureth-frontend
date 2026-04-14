@@ -1,0 +1,63 @@
+<div class="p-6 md:p-10 max-w-4xl mx-auto">
+  <div class="mb-6 flex items-center gap-4">
+    <a routerLink="/policies" class="text-gray-500 hover:text-primary transition-colors flex items-center">
+      <span nz-icon nzType="arrow-left" class="mr-2"></span> Back to Policies
+    </a>
+  </div>
+
+  <nz-skeleton [nzLoading]="isLoading" [nzActive]="true" [nzParagraph]="{ rows: 8 }"></nz-skeleton>
+
+  <nz-card *ngIf="error" nzTitle="Error" class="border-red-200">
+    <p class="text-red-500">{{error}}</p>
+  </nz-card>
+
+  <div *ngIf="!isLoading && !error && policyDetails">
+    <!-- Header Block -->
+    <div class="bg-white rounded-2xl shadow-sm p-8 mb-6 flex justify-between items-start border border-gray-100">
+      <div>
+        <h2 class="text-3xl font-black text-[#8732fb] mb-1">Flight {{policyDetails.policy.flightNumber}}</h2>
+        <p class="text-gray-500 font-medium">Policy ID: #{{policyDetails.policy.policyId}}</p>
+      </div>
+      <nz-tag [nzColor]="getStatusColor(policyDetails.policy.status)" class="rounded-full border-0 px-4 py-1 text-sm font-semibold">
+        {{getStatusText(policyDetails.policy.status)}}
+      </nz-tag>
+    </div>
+
+    <!-- Timeline Transparent Tracker -->
+    <div class="bg-white rounded-2xl shadow-sm p-8 border border-gray-100">
+      <h3 class="text-xl font-bold text-gray-800 mb-8 flex items-center gap-2">
+        <span nz-icon nzType="safety-certificate" nzTheme="outline" class="text-primary"></span>
+        Smart Contract Transaction History
+      </h3>
+
+      <nz-timeline [nzReverse]="true">
+        <nz-timeline-item *ngFor="let tx of policyDetails.transactions" 
+          [nzColor]="tx.type === 'PURCHASE' ? 'blue' : 'green'">
+          <div class="ml-4">
+            <h4 class="font-bold text-gray-800 text-lg m-0">{{tx.label}}</h4>
+            <span class="text-sm text-gray-500 block mb-2">{{tx.timestamp | date:'medium'}}</span>
+            
+            <div class="bg-gray-50 p-4 rounded-lg border border-gray-200 flex flex-col gap-2">
+              <div class="flex justify-between">
+                <span class="text-gray-500 font-semibold text-xs uppercase tracking-wider">Amount</span>
+                <span [class.text-red-500]="tx.type === 'PURCHASE'" [class.text-emerald-500]="tx.type === 'PAYOUT'" class="font-bold">
+                  {{tx.type === 'PURCHASE' ? '-' : '+'}}{{tx.amount}} ETH
+                </span>
+              </div>
+              <div class="flex justify-between items-center mt-2 border-t border-gray-200 pt-2">
+                <span class="text-gray-500 font-semibold text-xs uppercase tracking-wider">TX Hash</span>
+                <a [href]="'https://sepolia.etherscan.io/tx/' + tx.hash" target="_blank" rel="noopener noreferrer" class="font-mono text-xs text-[#8732fb] hover:text-[#7220e3] hover:underline truncate max-w-[200px] md:max-w-[400px] bg-primary-bg px-2 py-1 rounded flex items-center gap-1">
+                  {{tx.hash}} <span nz-icon nzType="link" nzTheme="outline"></span>
+                </a>
+              </div>
+            </div>
+          </div>
+        </nz-timeline-item>
+      </nz-timeline>
+
+      <div *ngIf="policyDetails.transactions.length === 0" class="text-center py-6 text-gray-400">
+        No transaction history located.
+      </div>
+    </div>
+  </div>
+</div>

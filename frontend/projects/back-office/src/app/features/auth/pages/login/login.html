@@ -1,0 +1,27 @@
+<div class="backoffice-login-shell">
+  <nz-card class="backoffice-login-card">
+    <div class="backoffice-login-header">
+      <img src="/logo.png" alt="Insureth Logo" class="backoffice-login-logo">
+      <h1 class="backoffice-login-brand">Insureth</h1>
+      <p class="backoffice-login-subtitle">Backoffice access for operations, claims review, and administrative workflows.</p>
+    </div>
+
+    <div class="backoffice-login-copy">
+      <h3>Connect your wallet</h3>
+      <p>Backoffice access is protected through an authorized wallet, a one-time nonce, and a backend-issued JWT session.</p>
+    </div>
+
+    <nz-alert *ngIf="walletService.error()" nzType="error" [nzMessage]="walletService.error()!" nzShowIcon class="mb-4"></nz-alert>
+    <nz-alert *ngIf="!walletService.error() && authService.error()" nzType="error" [nzMessage]="authService.error()!" nzShowIcon class="mb-4"></nz-alert>
+
+    <button nz-button nzType="default" nzBlock [nzLoading]="authService.isLoading() || walletService.isConnecting()" class="backoffice-login-button" (click)="connectWallet()">
+      <span nz-icon nzType="wallet" *ngIf="!authService.isLoading() && !walletService.isConnecting()" class="text-lg"></span>
+      {{ authService.isLoading() || walletService.isConnecting() ? 'Connecting & Verifying...' : 'Connect MetaMask' }}
+    </button>
+
+    <div class="backoffice-login-footer">
+      <span>Dev seed wallet:</span>
+      <code>0xf39f...2266</code>
+    </div>
+  </nz-card>
+</div>

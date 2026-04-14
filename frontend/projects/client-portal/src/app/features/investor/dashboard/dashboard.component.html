@@ -1,0 +1,196 @@
+<div class="p-6 md:p-10 max-w-7xl mx-auto">
+  <div class="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-4 mb-8">
+    <p class="text-gray-500 font-medium m-0 max-w-3xl">Monitor your liquidity portfolio across pools, compare capital invested against current value, and manage withdrawals.</p>
+    <div class="flex flex-wrap gap-3">
+      <button nz-button nzType="default" routerLink="/investor/dashboard/transactions" class="dashboard-action-button rounded-lg h-10 font-bold">
+        <span nz-icon nzType="history"></span>
+        <span>Transaction History</span>
+      </button>
+      <button nz-button nzType="primary" routerLink="/investor/pools" class="dashboard-action-button rounded-lg h-10 font-bold bg-[#8732fb] border-[#8732fb] hover:bg-[#7220e3] hover:border-[#7220e3]">
+        <span nz-icon nzType="plus"></span>
+        <span>Invest More</span>
+      </button>
+    </div>
+  </div>
+
+  <nz-skeleton [nzLoading]="isLoading" [nzActive]="true" [nzParagraph]="{ rows: 8 }"></nz-skeleton>
+
+  <div *ngIf="!isLoading">
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+      <nz-card class="shadow-sm border-0 rounded-2xl overflow-hidden bg-white">
+        <div class="flex flex-col">
+          <span class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Capital Invested</span>
+          <div class="flex items-end gap-2">
+            <span class="text-4xl font-black text-gray-800">{{netCapitalInvested | number:'1.2-6'}}</span>
+            <span class="text-xl font-bold text-gray-400 mb-1">ETH</span>
+          </div>
+          <span class="text-xs font-bold text-gray-400 bg-gray-50 px-2 py-1 rounded inline-flex w-max mt-3">Net deposits less withdrawals</span>
+        </div>
+      </nz-card>
+
+      <nz-card class="shadow-sm border-0 rounded-2xl overflow-hidden bg-white">
+        <div class="flex flex-col">
+          <span class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Portfolio Value</span>
+          <div class="flex items-end gap-2">
+            <span class="text-4xl font-black text-gray-800">{{investorValue | number:'1.2-6'}}</span>
+            <span class="text-xl font-bold text-gray-400 mb-1">ETH</span>
+          </div>
+          <span class="text-xs font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded inline-flex w-max mt-3 items-center gap-1">
+            <span nz-icon nzType="wallet"></span> Mark-to-pool value
+          </span>
+        </div>
+      </nz-card>
+
+      <nz-card class="shadow-sm border-0 rounded-2xl overflow-hidden bg-white">
+        <div class="flex flex-col">
+          <span class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Open PnL</span>
+          <div class="flex items-end gap-2">
+            <span class="text-4xl font-black" [class]="getPnlTone(openPnl)">
+              {{openPnl > 0 ? '+' : ''}}{{openPnl | number:'1.2-6'}}
+            </span>
+            <span class="text-xl font-bold text-gray-400 mb-1">ETH</span>
+          </div>
+          <span class="text-xs font-bold px-2 py-1 rounded inline-flex w-max mt-3"
+            [class]="openPnl > 0 ? 'text-emerald-600 bg-emerald-50' : openPnl < 0 ? 'text-red-600 bg-red-50' : 'text-gray-400 bg-gray-50'">
+            {{openPnlPct > 0 ? '+' : ''}}{{openPnlPct | number:'1.2-2'}}%
+          </span>
+        </div>
+      </nz-card>
+
+    </div>
+    <nz-card class="shadow-sm border-0 rounded-2xl overflow-hidden" [nzBodyStyle]="{padding: '0'}">
+      <div class="px-6 py-5 border-b border-gray-100 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
+        <div>
+          <h3 class="text-xl font-black text-gray-800 m-0">Open Positions</h3>
+          <p class="text-sm text-gray-500 mt-1 mb-0">Pool-level positions, ready to scale as you invest across multiple liquidity strategies.</p>
+        </div>
+        <span class="text-xs font-bold text-gray-400 uppercase tracking-widest">
+          {{positions.length}} {{positions.length === 1 ? 'position' : 'positions'}}
+        </span>
+      </div>
+
+      <nz-table [nzData]="positions" [nzShowPagination]="false" class="ibkr-table">
+        <thead>
+          <tr class="bg-gray-50 border-none">
+            <th class="font-bold text-gray-500 uppercase tracking-wider text-xs">Pool</th>
+            <th class="font-bold text-gray-500 uppercase tracking-wider text-xs">Shares Bought</th>
+            <th class="font-bold text-gray-500 uppercase tracking-wider text-xs">Bought Share Value</th>
+            <th class="font-bold text-gray-500 uppercase tracking-wider text-xs">Current Share Value</th>
+            <th class="font-bold text-gray-500 uppercase tracking-wider text-xs">Capital Invested</th>
+            <th class="font-bold text-gray-500 uppercase tracking-wider text-xs">Position Value</th>
+            <th class="font-bold text-gray-500 uppercase tracking-wider text-xs">Open PnL</th>
+            <th class="font-bold text-gray-500 uppercase tracking-wider text-xs">Weight</th>
+            <th class="font-bold text-gray-500 uppercase tracking-wider text-xs">Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let position of positions" class="hover:bg-gray-50 transition-colors">
+            <td class="py-4">
+              <div class="flex flex-col">
+                <span class="font-black text-gray-800">{{position.poolName}}</span>
+                <span class="text-xs font-medium text-gray-400">{{position.poolId}}</span>
+              </div>
+            </td>
+            <td class="py-4">
+              <span class="font-black text-gray-800">{{position.shares | number:'1.2-6'}} LP</span>
+            </td>
+            <td class="py-4">
+              <span class="font-black text-gray-800">{{position.boughtShareValue | number:'1.2-6'}} ETH</span>
+            </td>
+            <td class="py-4">
+              <span class="font-black text-sky-700">{{position.currentShareValue | number:'1.2-6'}} ETH</span>
+            </td>
+            <td class="py-4">
+              <span class="font-black text-gray-800">{{position.capitalInvested | number:'1.2-6'}} ETH</span>
+            </td>
+            <td class="py-4">
+              <span class="font-black text-sky-700">{{position.positionValue | number:'1.2-6'}} ETH</span>
+            </td>
+            <td class="py-4">
+              <div class="flex flex-col">
+                <span class="font-black" [class]="getPnlTone(position.openPnl)">
+                  {{position.openPnl > 0 ? '+' : ''}}{{position.openPnl | number:'1.2-6'}} ETH
+                </span>
+                <span class="text-xs font-bold" [class]="getPnlTone(position.openPnl)">
+                  {{position.openPnlPct > 0 ? '+' : ''}}{{position.openPnlPct | number:'1.2-2'}}%
+                </span>
+              </div>
+            </td>
+            <td class="py-4">
+              <nz-tag nzColor="geekblue">{{position.ownershipPercentage | number:'1.2-2'}}%</nz-tag>
+            </td>
+            <td class="py-4">
+              <div class="flex items-center gap-3">
+                <span class="font-black text-[#8732fb]">{{position.withdrawableNow | number:'1.2-6'}} ETH</span>
+                <button
+                  nz-button
+                  nzType="default"
+                  nzSize="small"
+                  class="dashboard-action-button rounded-lg font-bold"
+                  [disabled]="position.withdrawableNow <= 0"
+                  (click)="showWithdrawModal()">
+                  <span nz-icon nzType="download"></span>
+                  <span>Withdraw</span>
+                </button>
+              </div>
+            </td>
+          </tr>
+          <tr *ngIf="!hasPositions">
+            <td colspan="9" class="text-center py-10">
+              <div class="flex flex-col items-center gap-3">
+                <span class="text-gray-400 font-medium">You don't have any open liquidity positions yet.</span>
+                <button nz-button nzType="primary" routerLink="/investor/pools" class="dashboard-action-button rounded-lg font-bold bg-[#8732fb] border-[#8732fb] hover:bg-[#7220e3] hover:border-[#7220e3]">
+                  <span nz-icon nzType="plus"></span>
+                  <span>Explore Pools</span>
+                </button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </nz-table>
+    </nz-card>
+  </div>
+</div>
+
+<nz-modal
+  [(nzVisible)]="isWithdrawModalVisible"
+  nzTitle="Withdraw Capital"
+  (nzOnCancel)="handleWithdrawCancel()"
+  [nzFooter]="null"
+>
+  <ng-container *nzModalContent>
+    <div class="p-4">
+      <p class="text-gray-500 mb-2">Enter the amount of pool assets you want to redeem from your liquidity positions.</p>
+      <div class="flex flex-col gap-1 mb-6">
+        <p class="text-sm text-gray-400">Capital invested: <strong class="text-gray-800">{{netCapitalInvested | number:'1.2-6'}} ETH</strong></p>
+        <p class="text-sm text-gray-400">Current portfolio value: <strong class="text-gray-800">{{investorValue | number:'1.2-6'}} ETH</strong></p>
+        <p class="text-sm text-gray-400">Max withdrawable now: <strong class="text-emerald-600">{{maxWithdrawable | number:'1.2-6'}} ETH</strong></p>
+      </div>
+
+      <div class="mb-6 flex flex-col">
+        <label class="text-sm font-bold text-gray-700 mb-2">Withdrawal Amount (ETH)</label>
+        <nz-input-number
+          [(ngModel)]="withdrawAmount"
+          [nzMin]="0.0001"
+          [nzMax]="maxWithdrawable"
+          [nzStep]="0.1"
+          class="withdraw-amount-input">
+        </nz-input-number>
+      </div>
+
+      <div class="bg-blue-50 border border-blue-200 p-4 rounded-xl flex gap-3 mb-6 items-start">
+        <span nz-icon nzType="info-circle" nzTheme="fill" class="text-blue-500 text-lg mt-0.5"></span>
+        <div class="text-sm text-blue-800">
+          <strong>Note:</strong> Profit and loss are already reflected in position value. Withdrawals are limited by your share of current free liquidity.
+        </div>
+      </div>
+
+      <button nz-button nzType="primary" nzBlock nzSize="large"
+        class="dashboard-action-button bg-gray-800 border-gray-800 hover:bg-black font-bold h-12 rounded-xl text-lg"
+        (click)="submitWithdraw()" [nzLoading]="isWithdrawing">
+        <span nz-icon nzType="download"></span>
+        <span>Confirm Withdrawal</span>
+      </button>
+    </div>
+  </ng-container>
+</nz-modal>
