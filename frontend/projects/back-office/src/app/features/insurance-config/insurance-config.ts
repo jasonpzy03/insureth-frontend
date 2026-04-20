@@ -42,13 +42,6 @@ export class InsuranceConfigPage {
   readonly configForm = this.fb.nonNullable.group({
     productCode: ['', [Validators.required]],
     basePremiumEth: [10, [Validators.required, Validators.min(0)]],
-    delayPayoutTier1Eth: [15, [Validators.required, Validators.min(0)]],
-    delayPayoutTier2Eth: [20, [Validators.required, Validators.min(0)]],
-    delayPayoutTier3Eth: [30, [Validators.required, Validators.min(0)]],
-    cancellationPayoutEth: [30, [Validators.required, Validators.min(0)]],
-    delayThresholdTier1Minutes: [45, [Validators.required, Validators.min(1)]],
-    delayThresholdTier2Minutes: [120, [Validators.required, Validators.min(1)]],
-    delayThresholdTier3Minutes: [180, [Validators.required, Validators.min(1)]],
     premiumBaseRate: [1, [Validators.required, Validators.min(0)]],
     premiumPerDayMultiplier: [0.015, [Validators.required, Validators.min(0)]],
     premiumDemandMultiplier: [1, [Validators.required, Validators.min(0)]],
@@ -70,13 +63,6 @@ export class InsuranceConfigPage {
       this.configForm.patchValue({
         productCode: response.product.productCode,
         basePremiumEth: response.product.basePremiumEth,
-        delayPayoutTier1Eth: response.product.delayPayoutTier1Eth,
-        delayPayoutTier2Eth: response.product.delayPayoutTier2Eth,
-        delayPayoutTier3Eth: response.product.delayPayoutTier3Eth,
-        cancellationPayoutEth: response.product.cancellationPayoutEth,
-        delayThresholdTier1Minutes: response.product.delayThresholdTier1Minutes,
-        delayThresholdTier2Minutes: response.product.delayThresholdTier2Minutes,
-        delayThresholdTier3Minutes: response.product.delayThresholdTier3Minutes,
         premiumBaseRate: response.product.premiumBaseRate,
         premiumPerDayMultiplier: response.product.premiumPerDayMultiplier,
         premiumDemandMultiplier: response.product.premiumDemandMultiplier,
@@ -105,13 +91,6 @@ export class InsuranceConfigPage {
         product: {
           productCode: value.productCode.trim(),
           basePremiumEth: Number(value.basePremiumEth),
-          delayPayoutTier1Eth: Number(value.delayPayoutTier1Eth),
-          delayPayoutTier2Eth: Number(value.delayPayoutTier2Eth),
-          delayPayoutTier3Eth: Number(value.delayPayoutTier3Eth),
-          cancellationPayoutEth: Number(value.cancellationPayoutEth),
-          delayThresholdTier1Minutes: Number(value.delayThresholdTier1Minutes),
-          delayThresholdTier2Minutes: Number(value.delayThresholdTier2Minutes),
-          delayThresholdTier3Minutes: Number(value.delayThresholdTier3Minutes),
           premiumBaseRate: Number(value.premiumBaseRate),
           premiumPerDayMultiplier: Number(value.premiumPerDayMultiplier),
           premiumDemandMultiplier: Number(value.premiumDemandMultiplier),
@@ -122,9 +101,9 @@ export class InsuranceConfigPage {
 
       const updated = await this.configService.updatePricingConfig(payload);
       this.config.set(updated);
-      this.message.success('Flight insurance pricing updated.');
+      this.message.success('Flight insurance quote settings updated.');
     } catch (error: any) {
-      this.error.set(error?.error?.message || error?.error?.error || 'Unable to save flight insurance pricing.');
+      this.error.set(error?.error?.message || error?.error?.error || 'Unable to save flight insurance quote settings.');
     } finally {
       this.isSaving.set(false);
     }

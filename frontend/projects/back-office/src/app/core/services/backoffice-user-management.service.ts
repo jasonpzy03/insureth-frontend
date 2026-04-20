@@ -2,7 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
 import { API } from '../constants/api.constants';
-import { BackofficeUser, BackofficeUserCreateRequest } from '../models/backoffice-auth.models';
+import { BackofficeRole, BackofficeUser, BackofficeUserCreateRequest } from '../models/backoffice-auth.models';
 
 @Injectable({
   providedIn: 'root'
@@ -13,6 +13,12 @@ export class BackofficeUserManagementService {
   listUsers(): Promise<BackofficeUser[]> {
     return firstValueFrom(
       this.http.get<BackofficeUser[]>(`${API.AUTH_BASE_URL}/${API.BACKOFFICE}/users`)
+    );
+  }
+
+  listRoles(): Promise<BackofficeRole[]> {
+    return firstValueFrom(
+      this.http.get<BackofficeRole[]>(`${API.AUTH_BASE_URL}/${API.BACKOFFICE}/users/roles`)
     );
   }
 

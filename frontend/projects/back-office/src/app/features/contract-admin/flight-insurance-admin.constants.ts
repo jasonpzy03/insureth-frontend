@@ -1,69 +1,6 @@
-export const FLIGHT_INSURANCE_CONTRACT_ADDRESS = '0x4A679253410272dd5232B3Ff7cF5dbB88f295319';
+export const FLIGHT_INSURANCE_CONTRACT_ADDRESS = '0xCCf5FfDEC8Bf38F7390C13Dd21DA13F7e16Cf583';
 
 export const FLIGHT_INSURANCE_ADMIN_ABI = [
-  {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "newVerificationBuffer",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "newMinPurchaseLeadTime",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "newMaxPurchaseLeadTime",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint8",
-        "name": "newPlatformFeeMode",
-        "type": "uint8"
-      },
-      {
-        "internalType": "uint256",
-        "name": "newPlatformFeePercentage",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "newPlatformFeeFlatAmount",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "newMinThresholdMinutes",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "newMaxThresholdMinutes",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "newMinMultiplierBps",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "newMaxMultiplierBps",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "newCancellationMultiplierBps",
-        "type": "uint256"
-      }
-    ],
-    "name": "setAdminControls",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
   {
     "inputs": [
       {
@@ -75,6 +12,11 @@ export const FLIGHT_INSURANCE_ADMIN_ABI = [
         "internalType": "bytes32",
         "name": "_donId",
         "type": "bytes32"
+      },
+      {
+        "internalType": "address",
+        "name": "_payoutHelper",
+        "type": "address"
       }
     ],
     "stateMutability": "nonpayable",
@@ -385,11 +327,30 @@ export const FLIGHT_INSURANCE_ADMIN_ABI = [
     "stateMutability": "payable",
     "type": "function"
   },
-    {
-      "inputs": [
-        {
-          "internalType": "uint256",
-          "name": "premium",
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "premium",
+        "type": "uint256"
+      }
+    ],
+    "name": "calculateMaximumPayout",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "premium",
         "type": "uint256"
       },
       {
@@ -402,46 +363,40 @@ export const FLIGHT_INSURANCE_ADMIN_ABI = [
         "name": "delayMinutes",
         "type": "int256"
       }
-      ],
-      "name": "calculatePayout",
-      "outputs": [
-        {
-          "internalType": "uint256",
-          "name": "",
-          "type": "uint256"
-        }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "uint256",
-          "name": "premium",
-          "type": "uint256"
-        }
-      ],
-      "name": "calculateMaximumPayout",
-      "outputs": [
-        {
-          "internalType": "uint256",
-          "name": "",
-          "type": "uint256"
-        }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "uint256",
-          "name": "grossPremium",
+    ],
+    "name": "calculatePayout",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "grossPremium",
         "type": "uint256"
       }
     ],
     "name": "calculatePlatformFee",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "cancellationPayoutMultiplierBps",
     "outputs": [
       {
         "internalType": "uint256",
@@ -505,6 +460,25 @@ export const FLIGHT_INSURANCE_ADMIN_ABI = [
   {
     "inputs": [
       {
+        "internalType": "uint256",
+        "name": "delayMinutes",
+        "type": "uint256"
+      }
+    ],
+    "name": "getDelayPayoutMultiplierBps",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
         "internalType": "address",
         "name": "user",
         "type": "address"
@@ -528,33 +502,60 @@ export const FLIGHT_INSURANCE_ADMIN_ABI = [
         "type": "uint256"
       }
     ],
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "uint256",
-          "name": "delayMinutes",
-          "type": "uint256"
-        }
-      ],
-      "name": "getDelayPayoutMultiplierBps",
-      "outputs": [
-        {
-          "internalType": "uint256",
-          "name": "",
-          "type": "uint256"
-        }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "uint256",
-          "name": "grossPremium",
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "getMaximumPayoutMultiplierBps",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "getPayoutConfiguration",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "minDelayThresholdMinutes",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "maxDelayThresholdMinutes",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "minDelayMultiplierBps",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "maxDelayMultiplierBps",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "cancellationMultiplierBps",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "grossPremium",
         "type": "uint256"
       }
     ],
@@ -580,75 +581,8 @@ export const FLIGHT_INSURANCE_ADMIN_ABI = [
         "name": "feeValue",
         "type": "uint256"
       }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
-      "inputs": [],
-      "name": "getPayoutConfiguration",
-      "outputs": [
-        {
-          "internalType": "uint256",
-          "name": "minDelayThresholdMinutes",
-          "type": "uint256"
-        },
-        {
-          "internalType": "uint256",
-          "name": "maxDelayThresholdMinutes",
-          "type": "uint256"
-        },
-        {
-          "internalType": "uint256",
-          "name": "minDelayMultiplierBps",
-          "type": "uint256"
-        },
-        {
-          "internalType": "uint256",
-          "name": "maxDelayMultiplierBps",
-          "type": "uint256"
-        },
-        {
-          "internalType": "uint256",
-          "name": "cancellationMultiplierBps",
-          "type": "uint256"
-        }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-    },
-  {
-    "inputs": [
-      {
-        "internalType": "string",
-        "name": "flightNumber",
-        "type": "string"
-      },
-      {
-        "internalType": "string",
-        "name": "origin",
-        "type": "string"
-      },
-      {
-        "internalType": "string",
-        "name": "destination",
-        "type": "string"
-      },
-      {
-        "internalType": "uint256",
-        "name": "departureTime",
-        "type": "uint256"
-      }
     ],
-    "name": "getRiskKey",
-    "outputs": [
-      {
-        "internalType": "bytes32",
-        "name": "",
-        "type": "bytes32"
-      }
-    ],
-    "stateMutability": "pure",
+    "stateMutability": "view",
     "type": "function"
   },
   {
@@ -695,6 +629,32 @@ export const FLIGHT_INSURANCE_ADMIN_ABI = [
   },
   {
     "inputs": [],
+    "name": "maxDelayPayoutMultiplierBps",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "maxDelayPayoutThresholdMinutes",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
     "name": "maxPurchaseLeadTime",
     "outputs": [
       {
@@ -715,6 +675,32 @@ export const FLIGHT_INSURANCE_ADMIN_ABI = [
       }
     ],
     "name": "maxWithdrawable",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "minDelayPayoutMultiplierBps",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "minDelayPayoutThresholdMinutes",
     "outputs": [
       {
         "internalType": "uint256",
@@ -757,6 +743,19 @@ export const FLIGHT_INSURANCE_ADMIN_ABI = [
     "outputs": [
       {
         "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "payoutHelper",
+    "outputs": [
+      {
+        "internalType": "contract FlightInsurancePayoutHelper",
         "name": "",
         "type": "address"
       }
@@ -862,6 +861,19 @@ export const FLIGHT_INSURANCE_ADMIN_ABI = [
   },
   {
     "inputs": [],
+    "name": "postDeparturePurchaseGracePeriod",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
     "name": "provideLiquidity",
     "outputs": [],
     "stateMutability": "payable",
@@ -890,6 +902,29 @@ export const FLIGHT_INSURANCE_ADMIN_ABI = [
     "inputs": [
       {
         "internalType": "bytes32",
+        "name": "riskKey",
+        "type": "bytes32"
+      },
+      {
+        "internalType": "uint256",
+        "name": "statusInt",
+        "type": "uint256"
+      },
+      {
+        "internalType": "int256",
+        "name": "delayMinutes",
+        "type": "int256"
+      }
+    ],
+    "name": "simulateFlightResult",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "bytes32",
         "name": "",
         "type": "bytes32"
       }
@@ -903,6 +938,19 @@ export const FLIGHT_INSURANCE_ADMIN_ABI = [
       }
     ],
     "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "bytes32",
+        "name": "riskKey",
+        "type": "bytes32"
+      }
+    ],
+    "name": "resetOracleRequest",
+    "outputs": [],
+    "stateMutability": "nonpayable",
     "type": "function"
   },
   {
@@ -989,6 +1037,113 @@ export const FLIGHT_INSURANCE_ADMIN_ABI = [
     "type": "function"
   },
   {
+    "inputs": [],
+    "name": "secretsSlotID",
+    "outputs": [
+      {
+        "internalType": "uint8",
+        "name": "",
+        "type": "uint8"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "secretsVersion",
+    "outputs": [
+      {
+        "internalType": "uint64",
+        "name": "",
+        "type": "uint64"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "newVerificationBuffer",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "newMinPurchaseLeadTime",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "newMaxPurchaseLeadTime",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "newPostDeparturePurchaseGracePeriod",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint8",
+        "name": "newPlatformFeeMode",
+        "type": "uint8"
+      },
+      {
+        "internalType": "uint256",
+        "name": "newPlatformFeePercentage",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "newPlatformFeeFlatAmount",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "newMinThresholdMinutes",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "newMaxThresholdMinutes",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "newMinMultiplierBps",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "newMaxMultiplierBps",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "newCancellationMultiplierBps",
+        "type": "uint256"
+      }
+    ],
+    "name": "setAdminControls",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "newCancellationMultiplierBps",
+        "type": "uint256"
+      }
+    ],
+    "name": "setCancellationPayoutMultiplier",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
     "inputs": [
       {
         "internalType": "string",
@@ -1011,55 +1166,42 @@ export const FLIGHT_INSURANCE_ADMIN_ABI = [
     "stateMutability": "nonpayable",
     "type": "function"
   },
-    {
-      "inputs": [
-        {
-          "internalType": "uint256",
-          "name": "newMinThresholdMinutes",
-          "type": "uint256"
-        },
-        {
-          "internalType": "uint256",
-          "name": "newMaxThresholdMinutes",
-          "type": "uint256"
-        },
-        {
-          "internalType": "uint256",
-          "name": "newMinMultiplierBps",
-          "type": "uint256"
-        },
-        {
-          "internalType": "uint256",
-          "name": "newMaxMultiplierBps",
-          "type": "uint256"
-        }
-      ],
-      "name": "setDelayPayoutCurve",
-      "outputs": [],
-      "stateMutability": "nonpayable",
-      "type": "function"
-    },
-    {
+  {
     "inputs": [
       {
         "internalType": "uint256",
-        "name": "newCancellationMultiplierBps",
+        "name": "newMinThresholdMinutes",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "newMaxThresholdMinutes",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "newMinMultiplierBps",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "newMaxMultiplierBps",
         "type": "uint256"
       }
     ],
-      "name": "setCancellationPayoutMultiplier",
-      "outputs": [],
-      "stateMutability": "nonpayable",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "uint256",
-          "name": "newFlatFee",
-          "type": "uint256"
-        }
-      ],
+    "name": "setDelayPayoutCurve",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "newFlatFee",
+        "type": "uint256"
+      }
+    ],
     "name": "setPlatformFeeFlatAmount",
     "outputs": [],
     "stateMutability": "nonpayable",
@@ -1095,6 +1237,19 @@ export const FLIGHT_INSURANCE_ADMIN_ABI = [
     "inputs": [
       {
         "internalType": "uint256",
+        "name": "newGracePeriod",
+        "type": "uint256"
+      }
+    ],
+    "name": "setPostDeparturePurchaseGracePeriod",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
         "name": "newMinPurchaseLeadTime",
         "type": "uint256"
       },
@@ -1105,6 +1260,37 @@ export const FLIGHT_INSURANCE_ADMIN_ABI = [
       }
     ],
     "name": "setPurchaseWindow",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint8",
+        "name": "slotID",
+        "type": "uint8"
+      },
+      {
+        "internalType": "uint64",
+        "name": "version",
+        "type": "uint64"
+      }
+    ],
+    "name": "setSecrets",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "bool",
+        "name": "_use",
+        "type": "bool"
+      }
+    ],
+    "name": "setUseSecrets",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -1139,29 +1325,6 @@ export const FLIGHT_INSURANCE_ADMIN_ABI = [
       }
     ],
     "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "bytes32",
-        "name": "riskKey",
-        "type": "bytes32"
-      },
-      {
-        "internalType": "uint256",
-        "name": "statusInt",
-        "type": "uint256"
-      },
-      {
-        "internalType": "int256",
-        "name": "delayMinutes",
-        "type": "int256"
-      }
-    ],
-    "name": "simulateFlightResult",
-    "outputs": [],
-    "stateMutability": "nonpayable",
     "type": "function"
   },
   {
@@ -1237,6 +1400,19 @@ export const FLIGHT_INSURANCE_ADMIN_ABI = [
         "internalType": "uint256",
         "name": "",
         "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "useSecrets",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
       }
     ],
     "stateMutability": "view",

@@ -10,7 +10,7 @@
       </div>
 
       <!-- Sign Up Form (Complete Profile) -->
-      <div class="text-left animate-fade-in">
+      <div *ngIf="!awaitingVerification" class="text-left animate-fade-in">
         <h3 class="mb-2 font-bold text-center text-black">Complete Your Profile</h3>
         <p class="mb-6 text-center leading-relaxed text-gray-500">
           Almost there! Please securely link an email to your address.
@@ -52,6 +52,15 @@
             Complete Profile
           </button>
         </form>
+      </div>
+      
+      <!-- Awaiting Verification Message -->
+      <div *ngIf="awaitingVerification" class="text-center animate-fade-in py-5">
+        <nz-icon nzType="mail" nzTheme="twotone" [nzTwotoneColor]="'#1890ff'" style="font-size: 64px; margin-bottom: 16px;"></nz-icon>
+        <h3 class="mb-2 font-bold text-black">Check Your Email!</h3>
+        <p class="mb-6 leading-relaxed text-gray-500">
+          We've sent a verification link to your inbox. Please click the link to verify your account and complete your signup.
+        </p>
       </div>
 
     </nz-card>

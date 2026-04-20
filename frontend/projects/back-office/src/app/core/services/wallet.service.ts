@@ -21,7 +21,9 @@ export class WalletService {
     this.initializedResolve = resolve;
   });
 
-  private readonly targetChainId = '0x7a69';
+  // private readonly TARGET_CHAIN_ID = '0x7a69';
+  // --- Sepolia (uncomment to switch back) ---
+  private readonly TARGET_CHAIN_ID = '0xaa36a7'; // 11155111
 
   constructor() {
     this.init();
@@ -86,20 +88,36 @@ export class WalletService {
     try {
       await eth.request({
         method: 'wallet_switchEthereumChain',
-        params: [{ chainId: this.targetChainId }]
+        params: [{ chainId: this.TARGET_CHAIN_ID }]
       });
     } catch (switchError: any) {
       if (switchError.code === 4902) {
         await eth.request({
           method: 'wallet_addEthereumChain',
-          params: [{
-            chainId: this.targetChainId,
-            chainName: 'Hardhat Localhost',
-            nativeCurrency: { name: 'ETH', symbol: 'ETH', decimals: 18 },
-            rpcUrls: ['http://127.0.0.1:8545'],
-            blockExplorerUrls: []
-          }]
+          params: [
+            {
+              chainId: this.TARGET_CHAIN_ID,
+              chainName: 'Sepolia Testnet',
+              nativeCurrency: {
+                name: 'Sepolia ETH',
+                symbol: 'ETH',
+                decimals: 18,
+              },
+              rpcUrls: ['https://sepolia.infura.io/v3/d61c67d521c94cbb9fc3da4b765072f3'],
+              blockExplorerUrls: ['https://sepolia.etherscan.io']
+            },
+          ],
         });
+        // await eth.request({
+        //   method: 'wallet_addEthereumChain',
+        //   params: [{
+        //     chainId: this.targetChainId,
+        //     chainName: 'Hardhat Localhost',
+        //     nativeCurrency: { name: 'ETH', symbol: 'ETH', decimals: 18 },
+        //     rpcUrls: ['http://127.0.0.1:8545'],
+        //     blockExplorerUrls: []
+        //   }]
+        // });
       } else {
         this.switchingNetwork = false;
         throw switchError;
@@ -120,7 +138,7 @@ export class WalletService {
     try {
       const eth = (window as any).ethereum;
       const chainId = await eth.request({ method: 'eth_chainId' });
-      if (chainId !== this.targetChainId) {
+      if (chainId !== this.TARGET_CHAIN_ID) {
         await this.switchToTargetNetwork(eth);
         return null;
       }

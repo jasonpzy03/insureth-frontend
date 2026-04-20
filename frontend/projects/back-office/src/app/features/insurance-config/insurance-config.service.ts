@@ -64,4 +64,16 @@ export class InsuranceConfigService {
   updateAirport(airportId: number, payload: FlightInsuranceAirportUpdateRequest): Promise<FlightInsuranceAdminAirportModel> {
     return firstValueFrom(this.http.put<FlightInsuranceAdminAirportModel>(`${this.baseUrl}/airports/${airportId}`, payload));
   }
+
+  syncAirports(): Promise<void> {
+    return firstValueFrom(this.http.post<void>(`${this.baseUrl}/airports/sync`, {}));
+  }
+
+  syncAirlines(): Promise<void> {
+    return firstValueFrom(this.http.post<void>(`${this.baseUrl}/airlines/sync`, {}));
+  }
+
+  syncTimezones(): Promise<void> {
+    return firstValueFrom(this.http.post<void>(`${this.baseUrl}/airports/sync-timezones`, {}));
+  }
 }

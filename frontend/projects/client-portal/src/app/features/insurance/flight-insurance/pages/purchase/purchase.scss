@@ -69,6 +69,11 @@
   max-width: 28rem;
 }
 
+.purchase-note--source {
+  max-width: 18rem;
+  font-size: 0.85rem;
+}
+
 .purchase-primary-button.ant-btn {
   min-width: 11rem;
   height: 2.9rem;
@@ -92,6 +97,10 @@
   padding-inline: 1.15rem;
   border-radius: 0.85rem;
   font-weight: 700;
+}
+
+.purchase-secondary-button--inline.ant-btn {
+  min-width: 0;
 }
 
 .purchase-quote {
@@ -131,6 +140,13 @@
   font-weight: 800;
 }
 
+.quote-header__source {
+  margin: 0.45rem 0 0;
+  color: #64748b;
+  font-size: 0.85rem;
+  line-height: 1.5;
+}
+
 .quote-header__tag {
   margin: 0;
   border-radius: 999px;
@@ -143,6 +159,46 @@
   grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
   align-items: center;
   gap: 1rem;
+}
+
+.flight-data-strip {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.75rem;
+  margin-top: 1.25rem;
+}
+
+.flight-data-pill {
+  padding: 0.9rem 1rem;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  border-radius: 1rem;
+  background: #f8fafc;
+}
+
+.flight-data-pill__label {
+  display: block;
+  color: #64748b;
+  font-size: 0.74rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.flight-data-pill__value {
+  display: block;
+  margin-top: 0.35rem;
+  color: #111827;
+  font-size: 0.95rem;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+.itinerary-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 1.25rem;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(15, 23, 42, 0.06);
 }
 
 .itinerary-point {
@@ -223,6 +279,17 @@
   margin-top: 1.25rem;
 }
 
+.coverage-loading-note {
+  margin-top: 1.25rem;
+  padding: 0.85rem 1rem;
+  border: 1px dashed rgba(135, 50, 251, 0.18);
+  border-radius: 0.9rem;
+  background: #faf7ff;
+  color: #6b7280;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
 .coverage-row {
   display: flex;
   align-items: center;
@@ -238,6 +305,10 @@
   display: flex;
   align-items: center;
   gap: 0.9rem;
+}
+
+.coverage-row__detail--stacked {
+  align-items: flex-start;
 }
 
 .coverage-row__icon {
@@ -294,10 +365,36 @@
   white-space: nowrap;
 }
 
+.coverage-row--formula .coverage-row__amount {
+  align-self: flex-start;
+}
+
+.coverage-formula {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+  margin-top: 0.7rem;
+}
+
+.coverage-formula__chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.45rem 0.7rem;
+  border-radius: 999px;
+  background: #f8fafc;
+  color: #475569;
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
 .coverage-footer {
   margin-top: 1.5rem;
   padding-top: 1rem;
   border-top: 1px solid rgba(15, 23, 42, 0.06);
+}
+
+.coverage-footer--single {
+  justify-content: flex-end;
 }
 
 @media (max-width: 768px) {
@@ -311,6 +408,10 @@
 
   .purchase-form__grid,
   .itinerary-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .flight-data-strip {
     grid-template-columns: 1fr;
   }
 
@@ -330,6 +431,10 @@
 
   .coverage-price {
     text-align: left;
+  }
+
+  .itinerary-actions {
+    justify-content: stretch;
   }
 
   .purchase-primary-button.ant-btn,

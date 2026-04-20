@@ -35,6 +35,16 @@ export class AuthService {
     return this.http.post<void>(url, userModel, context ? { context } : undefined);
   }
 
+  initiateSignupClientUser(userModel: ClientUserModel, context?: HttpContext): Observable<void> {
+    const url = `${this.apiBaseUrl}/signup/initiate`;
+    return this.http.post<void>(url, userModel, context ? { context } : undefined);
+  }
+
+  verifySignupClientUser(token: string, context?: HttpContext): Observable<void> {
+    const url = `${this.apiBaseUrl}/signup/verify`;
+    return this.http.post<void>(url, { token }, context ? { context } : undefined);
+  }
+
   getClientUser(walletAddress: string): Observable<ClientUserModel> {
     const url = `${this.apiBaseUrl}/${walletAddress}`;
     return this.http.get<ClientUserModel>(url);

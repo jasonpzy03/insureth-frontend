@@ -11,9 +11,102 @@
     </div>
   </div>
 
-  <nz-skeleton [nzLoading]="isLoading" [nzActive]="true" [nzParagraph]="{ rows: 10 }"></nz-skeleton>
+  <div *ngIf="isLoading" class="grid grid-cols-1 gap-6">
+    <nz-card class="shadow-sm border-0 rounded-2xl overflow-hidden bg-white">
+      <nz-skeleton [nzLoading]="true" [nzActive]="true" [nzParagraph]="{ rows: 5 }"></nz-skeleton>
+    </nz-card>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-6">
+      <nz-card *ngFor="let _ of [1,2,3,4,5]" class="shadow-sm border-0 rounded-2xl overflow-hidden bg-white">
+        <nz-skeleton [nzLoading]="true" [nzActive]="true" [nzParagraph]="{ rows: 2 }"></nz-skeleton>
+      </nz-card>
+    </div>
+
+    <div class="grid grid-cols-1 xl:grid-cols-[minmax(0,1.6fr)_minmax(20rem,0.9fr)] gap-6">
+      <nz-card class="shadow-sm border-0 rounded-2xl overflow-hidden bg-white">
+        <nz-skeleton [nzLoading]="true" [nzActive]="true" [nzParagraph]="{ rows: 6 }"></nz-skeleton>
+      </nz-card>
+      <div class="grid grid-cols-1 gap-6">
+        <nz-card class="shadow-sm border-0 rounded-2xl overflow-hidden bg-white">
+          <nz-skeleton [nzLoading]="true" [nzActive]="true" [nzParagraph]="{ rows: 4 }"></nz-skeleton>
+        </nz-card>
+        <nz-card class="shadow-sm border-0 rounded-2xl overflow-hidden bg-white">
+          <nz-skeleton [nzLoading]="true" [nzActive]="true" [nzParagraph]="{ rows: 4 }"></nz-skeleton>
+        </nz-card>
+      </div>
+    </div>
+  </div>
 
   <div *ngIf="!isLoading">
+    <div *ngIf="ongoingPolicy" class="pb-10">
+    <nz-card class="shadow-sm border-0 rounded-2xl overflow-hidden bg-white">
+      <div class="flex flex-col xl:flex-row xl:items-start xl:justify-between gap-6">
+        <div class="flex-1">
+          <span class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2 block">Current Verification Progress</span>
+          <h3 class="text-2xl font-black text-gray-800 m-0">{{ongoingPolicy.flightNumber}} {{ongoingPolicy.origin}} → {{ongoingPolicy.destination}}</h3>
+          <p class="text-sm text-gray-500 mt-3 mb-0 max-w-3xl">{{getOngoingPolicyHeadline()}}. {{getOngoingPolicyBody()}}</p>
+
+          <div class="w-full h-3 bg-gray-100 rounded-full overflow-hidden mt-6 mb-3">
+            <div
+              class="h-full rounded-full transition-all duration-500"
+              [ngClass]="isOracleVerificationStuck(ongoingPolicy)
+                ? 'bg-gradient-to-r from-amber-400 via-amber-500 to-orange-500'
+                : 'bg-gradient-to-r from-[#8732fb] via-[#6f5ef9] to-[#40c4ff]'"
+              [style.width.%]="getOngoingPolicyProgress()">
+            </div>
+          </div>
+
+          <div class="flex flex-wrap gap-3 text-sm">
+            <span
+              class="text-xs font-bold px-3 py-2 rounded-full"
+              [ngClass]="isOracleVerificationStuck(ongoingPolicy)
+                ? 'text-amber-800 bg-amber-50'
+                : 'text-[#8732fb] bg-primary-bg'">
+              {{isOracleVerificationStuck(ongoingPolicy) ? 'Expected verification time was ' : 'Oracle fetch expected at '}}
+              {{formatOracleExpectedTime()}}
+            </span>
+            <span
+              class="text-xs font-bold px-3 py-2 rounded-full"
+              [ngClass]="isOracleVerificationStuck(ongoingPolicy)
+                ? 'text-amber-800 bg-amber-100'
+                : 'text-gray-500 bg-gray-50'">
+              {{getOngoingPolicyCountdown()}}
+            </span>
+          </div>
+        </div>
+
+        <div
+          class="rounded-2xl p-5 min-w-[18rem] border"
+          [ngClass]="isOracleVerificationStuck(ongoingPolicy)
+            ? 'bg-amber-50 border-amber-200'
+            : 'bg-gray-50 border-gray-200'">
+          <span
+            class="text-xs font-bold uppercase tracking-widest block mb-2"
+            [ngClass]="isOracleVerificationStuck(ongoingPolicy) ? 'text-amber-700' : 'text-gray-400'">
+            Next Step
+          </span>
+          <span
+            class="text-lg font-black block mb-2"
+            [ngClass]="isOracleVerificationStuck(ongoingPolicy) ? 'text-amber-900' : 'text-gray-800'">
+            {{isOracleVerificationStuck(ongoingPolicy)
+              ? 'Contact us for manual verification'
+              : (ongoingPolicy.oracleRequested ? 'Wait for Chainlink response' : 'Wait for oracle verification window')}}
+          </span>
+          <p
+            class="text-sm mb-4"
+            [ngClass]="isOracleVerificationStuck(ongoingPolicy) ? 'text-amber-800' : 'text-gray-500'">
+            {{isOracleVerificationStuck(ongoingPolicy)
+              ? 'The oracle did not finish this verification as expected. Our backoffice team can manually verify the flight and resolve the outcome for you.'
+              : 'We use the contract verification buffer to decide when automation can ask Chainlink for the final outcome.'}}
+          </p>
+          <button nz-button nzType="default" [routerLink]="['/policies', ongoingPolicy.policyId]" class="rounded-lg font-bold">
+            Open Policy Tracker
+          </button>
+        </div>
+      </div>
+    </nz-card>
+    </div>
+
     <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-6 mb-8">
       <nz-card class="shadow-sm border-0 rounded-2xl overflow-hidden bg-white">
         <div class="flex flex-col">
@@ -38,10 +131,11 @@
       <nz-card class="shadow-sm border-0 rounded-2xl overflow-hidden bg-white">
         <div class="flex flex-col">
           <span class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Total Premium Paid</span>
-          <div class="flex items-end gap-2">
-            <span class="text-4xl font-black text-gray-800">{{totalPremiumPaid | number:'1.2-6'}}</span>
-            <span class="text-xl font-bold text-gray-400 mb-1">ETH</span>
+          <div class="dashboard-metric-amount">
+            <span class="dashboard-metric-amount__value text-gray-800">{{totalPremiumPaid | ethAmount}}</span>
+            <span class="dashboard-metric-amount__unit">ETH</span>
           </div>
+          <span *ngIf="formatApproxUsd(totalPremiumPaid)" class="text-xs font-bold text-gray-400 mt-1">{{formatApproxUsd(totalPremiumPaid)}}</span>
           <span class="text-xs font-bold text-gray-400 bg-gray-50 px-2 py-1 rounded inline-flex w-max mt-3">Across all policies</span>
         </div>
       </nz-card>
@@ -49,10 +143,11 @@
       <nz-card class="shadow-sm border-0 rounded-2xl overflow-hidden bg-white">
         <div class="flex flex-col">
           <span class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Total Disbursed</span>
-          <div class="flex items-end gap-2">
-            <span class="text-4xl font-black text-emerald-600">{{totalDisbursed | number:'1.2-6'}}</span>
-            <span class="text-xl font-bold text-gray-400 mb-1">ETH</span>
+          <div class="dashboard-metric-amount">
+            <span class="dashboard-metric-amount__value text-emerald-600">{{totalDisbursed | ethAmount}}</span>
+            <span class="dashboard-metric-amount__unit">ETH</span>
           </div>
+          <span *ngIf="formatApproxUsd(totalDisbursed)" class="text-xs font-bold text-gray-400 mt-1">{{formatApproxUsd(totalDisbursed)}}</span>
           <span class="text-xs font-bold text-emerald-600 bg-emerald-50 px-2 py-1 rounded inline-flex w-max mt-3">Payouts received</span>
         </div>
       </nz-card>
@@ -97,8 +192,18 @@
                 </div>
               </td>
               <td class="py-4 text-gray-600 font-medium">{{policy.departureTime | date:'medium'}}</td>
-              <td class="py-4"><span class="font-black text-gray-800">{{policy.premiumPaid || policy.premium}} ETH</span></td>
-              <td class="py-4"><span class="font-black text-emerald-600">{{policy.payoutAmount}} ETH</span></td>
+              <td class="py-4">
+                <div class="flex flex-col">
+                  <span class="font-black text-gray-800">{{policy.premium | ethAmount}} ETH</span>
+                  <span *ngIf="formatApproxUsd(policy.premium)" class="text-xs font-semibold text-gray-400">{{formatApproxUsd(policy.premium)}}</span>
+                </div>
+              </td>
+              <td class="py-4">
+                <div class="flex flex-col">
+                  <span class="font-black text-emerald-600">{{policy.payoutAmount | ethAmount}} ETH</span>
+                  <span *ngIf="formatApproxUsd(policy.payoutAmount)" class="text-xs font-semibold text-gray-400">{{formatApproxUsd(policy.payoutAmount)}}</span>
+                </div>
+              </td>
               <td class="py-4">
                 <nz-tag [nzColor]="getStatusColor(policy)">{{getStatusText(policy)}}</nz-tag>
               </td>
@@ -129,9 +234,10 @@
                 <div class="flex items-center justify-between gap-3">
                   <span class="font-black text-gray-800">{{activity.title}}</span>
                   <span class="font-black" [class]="activity.tone === 'emerald' ? 'text-emerald-600' : 'text-blue-600'">
-                    {{activity.amount}} ETH
+                    {{activity.amount | ethAmount}} ETH
                   </span>
                 </div>
+                <p *ngIf="formatApproxUsd(activity.amount)" class="text-xs text-gray-400 mb-1">{{formatApproxUsd(activity.amount)}}</p>
                 <p class="text-sm text-gray-500 mb-1">{{activity.subtitle}}</p>
                 <p class="text-xs text-gray-400 mb-0">Policy #{{activity.policyId}} • {{activity.timestamp | date:'medium'}}</p>
               </div>

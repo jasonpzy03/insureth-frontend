@@ -9,7 +9,7 @@ import { NzInputModule } from 'ng-zorro-antd/input';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { NzSelectModule } from 'ng-zorro-antd/select';
 import { NzTableModule } from 'ng-zorro-antd/table';
-import { BackofficeUser, BackofficeUserCreateRequest } from '../../core/models/backoffice-auth.models';
+import { BackofficeRole, BackofficeUser, BackofficeUserCreateRequest } from '../../core/models/backoffice-auth.models';
 import { BackofficeUserManagementService } from '../../core/services/backoffice-user-management.service';
 
 @Component({
@@ -35,20 +35,21 @@ export class BackofficeUsersPage {
   private readonly userManagementService = inject(BackofficeUserManagementService);
 
   readonly users = signal<BackofficeUser[]>([]);
+  readonly availableRoles = signal<BackofficeRole[]>([]);
   readonly isLoading = signal(false);
   readonly isSubmitting = signal(false);
   readonly error = signal<string | null>(null);
-  readonly roleOptions = ['ADMIN', 'OPERATOR', 'REVIEWER'];
 
   readonly createUserForm = this.fb.nonNullable.group({
     username: ['', [Validators.required, Validators.minLength(3)]],
     email: ['', [Validators.required, Validators.email]],
     walletAddress: ['', [Validators.required]],
-    role: ['OPERATOR', [Validators.required]]
+    roles: [['OPERATOR'] as string[], [Validators.required]]
   });
 
   constructor() {
     void this.loadUsers();
+    void this.loadRoles();
   }
 
   async loadUsers(): Promise<void> {
@@ -62,6 +63,14 @@ export class BackofficeUsersPage {
       this.error.set(error?.error?.message || error?.error?.error || 'Unable to load backoffice users.');
     } finally {
       this.isLoading.set(false);
+    }
+  }
+
+  async loadRoles(): Promise<void> {
+    try {
+      this.availableRoles.set(await this.userManagementService.listRoles());
+    } catch (error: any) {
+      this.error.set(error?.error?.message || error?.error?.error || 'Unable to load backoffice roles.');
     }
   }
 
@@ -79,7 +88,7 @@ export class BackofficeUsersPage {
         username: this.createUserForm.controls.username.value.trim(),
         email: this.createUserForm.controls.email.value.trim(),
         walletAddress: this.createUserForm.controls.walletAddress.value.trim(),
-        role: this.createUserForm.controls.role.value
+        roles: this.createUserForm.controls.roles.value
       };
 
       const createdUser = await this.userManagementService.createUser(payload);
@@ -88,7 +97,7 @@ export class BackofficeUsersPage {
         username: '',
         email: '',
         walletAddress: '',
-        role: 'OPERATOR'
+        roles: ['OPERATOR']
       });
       this.message.success('Backoffice user created successfully.');
     } catch (error: any) {
@@ -96,5 +105,9 @@ export class BackofficeUsersPage {
     } finally {
       this.isSubmitting.set(false);
     }
+  }
+
+  formatRoles(user: BackofficeUser): string {
+    return (user.roles?.length ? user.roles : [user.role]).join(', ');
   }
 }

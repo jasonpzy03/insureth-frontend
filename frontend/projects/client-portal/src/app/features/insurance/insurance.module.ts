@@ -13,6 +13,9 @@ import { NzSkeletonModule } from 'ng-zorro-antd/skeleton';
 import { FlightInsuranceLandingPage } from './flight-insurance/pages/flight-insurance-landing/flight-insurance-landing';
 import { PurchasePage } from './flight-insurance/pages/purchase/purchase';
 import { NzTagModule } from 'ng-zorro-antd/tag';
+import { NzSpinModule } from 'ng-zorro-antd/spin';
+import { NzModalModule } from 'ng-zorro-antd/modal';
+import { EthAmountPipe } from '../../core/pipes/eth-amount.pipe';
 
 @NgModule({
   declarations: [
@@ -32,6 +35,9 @@ import { NzTagModule } from 'ng-zorro-antd/tag';
     NzDatePickerModule,
     NzSkeletonModule,
     NzTagModule,
+    NzSpinModule,
+    NzModalModule,
+    EthAmountPipe,
   ],
   exports: [
     FlightInsuranceLandingPage,

@@ -11,6 +11,7 @@
       <ul nz-menu class="!bg-transparent leading-[64px] border-b-0" nzMode="horizontal" *ngIf="authService.isAuthenticated()">
         <li nz-menu-item routerLinkActive="ant-menu-item-selected" routerLink="/dashboard">Dashboard</li>
         <li nz-menu-item routerLinkActive="ant-menu-item-selected" routerLink="/users">Users</li>
+        <li nz-menu-item routerLinkActive="ant-menu-item-selected" routerLink="/policy-operations">Policy Ops</li>
         <li nz-submenu [nzTitle]="insuranceConfigTitle" class="no-underline-tab">
           <ul>
             <li nz-menu-item disabled class="!cursor-default !opacity-100">

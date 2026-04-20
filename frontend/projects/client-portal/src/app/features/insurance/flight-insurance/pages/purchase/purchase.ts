@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { forkJoin } from 'rxjs';
+import { firstValueFrom, forkJoin } from 'rxjs';
 import { finalize } from 'rxjs/operators';
 import { AirportModel } from '../../models/airportModel';
 import { AirlineModel } from '../../models/airlineModel';
@@ -11,6 +11,10 @@ import { NzMessageService } from 'ng-zorro-antd/message';
 import { Router } from '@angular/router';
 import { FlightInsuranceExperienceConfigResponse } from '../../models/flightInsuranceConfig.model';
 import { FlightInsuranceQuoteResponse } from '../../models/flightInsuranceQuote.model';
+import { EthPriceService } from '../../../../../core/services/eth-price.service';
+import { EthAmountPipe } from '../../../../../core/pipes/eth-amount.pipe';
+import { NotificationService } from '../../../../../core/services/notification.service';
+import { TransactionFlowService } from '../../../../../core/services/transaction-flow.service';
 
 type PremiumBreakdown = {
   grossPremiumEth: number;
@@ -33,9 +37,11 @@ type DelayCoverageRow = {
   styleUrl: './purchase.scss',
 })
 export class PurchasePage implements OnInit {
+  private readonly ethAmountPipe = new EthAmountPipe();
   purchaseForm!: FormGroup;
   isLoading = true;
   isSearching = false;
+  isContractDataLoading = false;
   flightSchedule: FlightScheduleResponseModel | null = null;
   config: FlightInsuranceExperienceConfigResponse | null = null;
   quote: FlightInsuranceQuoteResponse | null = null;
@@ -50,8 +56,30 @@ export class PurchasePage implements OnInit {
     private flightInsuranceService: FlightInsuranceService,
     private contractService: FlightInsuranceContractService,
     private message: NzMessageService,
-    private router: Router
+    private router: Router,
+    private ethPriceService: EthPriceService,
+    private notificationService: NotificationService,
+    private transactionFlow: TransactionFlowService
   ) { }
+
+  private toUtcUnixTimestamp(scheduleTime: string): number {
+    if (!scheduleTime?.trim()) {
+      throw new Error('Flight schedule time is missing.');
+    }
+
+    const normalized = scheduleTime.trim();
+    const hasUtcIndicator = normalized.endsWith('Z') || /[+-]\d{2}:\d{2}$/.test(normalized);
+    if (!hasUtcIndicator) {
+      throw new Error('Flight schedule time is not timezone-aware.');
+    }
+
+    const timestamp = Date.parse(normalized);
+    if (Number.isNaN(timestamp)) {
+      throw new Error('Flight schedule time could not be parsed.');
+    }
+
+    return Math.floor(timestamp / 1000);
+  }
 
   ngOnInit(): void {
     this.purchaseForm = this.fb.group({
@@ -62,6 +90,7 @@ export class PurchasePage implements OnInit {
     });
 
     this.loadDropdownData();
+    void this.ethPriceService.ensureLoaded();
   }
 
   private loadDropdownData(): void {
@@ -83,11 +112,16 @@ export class PurchasePage implements OnInit {
   }
 
   disabledDate = (selectedDate: Date): boolean => {
-    // Can only select days that are at least 7 days from today
-    const minDate = new Date();
-    minDate.setDate(minDate.getDate() + 7);
-    minDate.setHours(0, 0, 0, 0);
-    return selectedDate.getTime() < minDate.getTime();
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const firstFutureBookableDate = new Date(today);
+    firstFutureBookableDate.setDate(firstFutureBookableDate.getDate() + 7);
+
+    const current = new Date(selectedDate);
+    current.setHours(0, 0, 0, 0);
+
+    return current.getTime() > today.getTime() && current.getTime() < firstFutureBookableDate.getTime();
   };
 
   async submitForm(): Promise<void> {
@@ -113,38 +147,18 @@ export class PurchasePage implements OnInit {
       // ==========================================
       // Testing Mode: Mock response to bypass API
       // ==========================================
-      setTimeout(() => {
-        this.flightSchedule = {
-          flightIATA: `${formValue.airline.toUpperCase()}${formValue.flightNumber}`,
-          departureAirportIATA: formValue.departureAirport.toUpperCase(),
-          arrivalAirportIATA: 'JHB',
-          departureAirportName: 'Kuala Lumpur Internation Airport',
-          arrivalAirportName: 'Senai Internation Airport',
-          departureTime: new Date(dateObj.getTime() + 1000 * 3600 * 6).toISOString(),
-          arrivalTime: new Date(dateObj.getTime() + 1000 * 3600 * 12).toISOString(),
-        };
+      // setTimeout(() => {
+      //   this.flightSchedule = {
+      //     flightIATA: `${formValue.airline.toUpperCase()}${formValue.flightNumber}`,
+      //     departureAirportIATA: formValue.departureAirport.toUpperCase(),
+      //     arrivalAirportIATA: 'JHB',
+      //     departureAirportName: 'Kuala Lumpur Internation Airport',
+      //     arrivalAirportName: 'Senai Internation Airport',
+      //     departureTime: new Date(dateObj.getTime() + 1000 * 3600 * 6).toISOString(),
+      //     arrivalTime: new Date(dateObj.getTime() + 1000 * 3600 * 12).toISOString(),
+      //   };
+      // }, 800);
 
-        this.flightInsuranceService.getQuote(
-          formValue.airline,
-          formValue.flightNumber,
-          formattedDate
-        ).subscribe({
-          next: async (quote) => {
-            this.quote = quote;
-            await this.refreshPremiumBreakdown();
-            await this.refreshDelayCoverageRows();
-            this.isSearching = false;
-          },
-          error: () => {
-            this.flightSchedule = null;
-            this.quote = null;
-            this.delayCoverageRows = [];
-            this.isSearching = false;
-          }
-        });
-      }, 800);
-
-      /* --- ORIGINAL BACKEND CALL ---
       this.flightInsuranceService.getFlightSchedule(
         formValue.airline,
         formValue.flightNumber,
@@ -155,44 +169,33 @@ export class PurchasePage implements OnInit {
       ).subscribe({
         next: (res) => {
           console.log('Flight Schedule retrieved:', res);
-
-          // Helper to combine the selected date with the "HH:mm" time from the API
-          const parseTime = (timeStr: string, baseDate: Date) => {
-            if (!timeStr || !timeStr.includes(':')) return new Date(baseDate);
-            const [hours, minutes] = timeStr.split(':').map(Number);
-            const d = new Date(baseDate);
-            d.setHours(hours || 0, minutes || 0, 0, 0);
-            return d;
-          };
-
-          const depDate = parseTime(res.departureTime, dateObj);
-          const arrDate = parseTime(res.arrivalTime || res.departureTime, dateObj);
-
-          // Standardize arrival if it's "before" departure (next day flight)
-          if (arrDate < depDate) {
-            arrDate.setDate(arrDate.getDate() + 1);
-          }
-
-          this.flightSchedule = {
-            ...res,
-            departureTime: depDate.toISOString(),
-            arrivalTime: arrDate.toISOString()
-          };
-
-          // Stable calculations to prevent infinite change detection loops
-          this.calculateStablePremium();
-          this.generateDelayCoverageRows();
-
-          void this.refreshPremiumBreakdown();
-          console.log("DONE REFRESH");
+          this.flightSchedule = res;
         },
         error: (err) => {
           console.error('Failed to fetch flight schedule:', err);
           this.message.error('Could not find flight schedule. Please check the airline and flight number.');
         }
       });
-      --------------------------------- */
 
+      this.flightInsuranceService.getQuote(
+        formValue.airline,
+        formValue.flightNumber,
+        formattedDate
+      ).subscribe({
+        next: async (quote) => {
+          this.quote = quote;
+          await this.refreshContractData();
+          this.isSearching = false;
+        },
+        error: () => {
+          this.flightSchedule = null;
+          this.quote = null;
+          this.premiumBreakdown = null;
+          this.delayCoverageRows = [];
+          this.isContractDataLoading = false;
+          this.isSearching = false;
+        }
+      });
     } else {
       Object.values(this.purchaseForm.controls).forEach(control => {
         if (control.invalid) {
@@ -210,25 +213,37 @@ export class PurchasePage implements OnInit {
   }
 
   get premiumDisplay(): string {
+    if (this.isContractDataLoading && this.quote) {
+      return `Loading ${this.displayCurrency}...`;
+    }
+
     return this.quote
-      ? `${Number(this.quote.quotedPremiumEth).toFixed(4)} ${this.displayCurrency}`
+      ? `${this.ethAmountPipe.transform(this.quote.quotedPremiumEth)} ${this.displayCurrency}`
       : `-- ${this.displayCurrency}`;
   }
 
   get premiumFeeDisplay(): string {
+    if (this.isContractDataLoading) {
+      return `Loading ${this.displayCurrency}...`;
+    }
+
     if (!this.premiumBreakdown) {
       return `-- ${this.displayCurrency}`;
     }
 
-    return `${this.premiumBreakdown.feeAmountEth.toFixed(4)} ${this.displayCurrency}`;
+    return `${this.ethAmountPipe.transform(this.premiumBreakdown.feeAmountEth)} ${this.displayCurrency}`;
   }
 
   get netPremiumDisplay(): string {
+    if (this.isContractDataLoading) {
+      return `Loading ${this.displayCurrency}...`;
+    }
+
     if (!this.premiumBreakdown) {
       return `-- ${this.displayCurrency}`;
     }
 
-    return `${this.premiumBreakdown.netPremiumEth.toFixed(4)} ${this.displayCurrency}`;
+    return `${this.ethAmountPipe.transform(this.premiumBreakdown.netPremiumEth)} ${this.displayCurrency}`;
   }
 
   get feeLabel(): string {
@@ -237,10 +252,60 @@ export class PurchasePage implements OnInit {
     }
 
     if (this.premiumBreakdown.feeMode === 'FLAT_AMOUNT') {
-      return `Platform Fee (Flat ${this.premiumBreakdown.configuredFeeValue.toFixed(4)} ${this.displayCurrency})`;
+      return `Platform Fee (Flat ${this.ethAmountPipe.transform(this.premiumBreakdown.configuredFeeValue)} ${this.displayCurrency})`;
     }
 
     return `Platform Fee (${this.premiumBreakdown.configuredFeeValue}% of total paid)`;
+  }
+
+  get premiumUsdApprox(): string {
+    return this.quote
+      ? this.ethPriceService.formatApproxUsd(this.quote.quotedPremiumEth)
+      : '';
+  }
+
+  get premiumFeeUsdApprox(): string {
+    return this.premiumBreakdown
+      ? this.ethPriceService.formatApproxUsd(this.premiumBreakdown.feeAmountEth)
+      : '';
+  }
+
+  get netPremiumUsdApprox(): string {
+    return this.premiumBreakdown
+      ? this.ethPriceService.formatApproxUsd(this.premiumBreakdown.netPremiumEth)
+      : '';
+  }
+
+  get basePremiumDisplay(): string {
+    if (!this.quote) {
+      return `-- ${this.displayCurrency}`;
+    }
+
+    return `${this.ethAmountPipe.transform(this.quote.basePremiumEth)} ${this.displayCurrency}`;
+  }
+
+  get daysMultiplierDisplay(): string {
+    if (!this.quote) {
+      return '--';
+    }
+
+    return `x${Number(this.quote.daysMultiplier).toFixed(2)}`;
+  }
+
+  get performanceMultiplierDisplay(): string {
+    if (!this.quote) {
+      return '--';
+    }
+
+    return `x${Number(this.quote.performanceMultiplier).toFixed(2)}`;
+  }
+
+  get totalMultiplierDisplay(): string {
+    if (!this.quote) {
+      return '--';
+    }
+
+    return `x${Number(this.quote.totalMultiplier).toFixed(2)}`;
   }
 
   async refreshDelayCoverageRows(): Promise<void> {
@@ -257,22 +322,22 @@ export class PurchasePage implements OnInit {
       this.delayCoverageRows = [
         {
           label: `Delay at ${preview.minDelayThresholdMinutes} minutes`,
-          amount: `${preview.minDelayPayoutEth.toFixed(4)} ${this.displayCurrency}`,
+          amount: `${this.ethAmountPipe.transform(preview.minDelayPayoutEth)} ${this.displayCurrency}`,
           meta: 'First payout trigger'
         },
         {
           label: `Delay at ${preview.exampleDelayMinutes} minutes`,
-          amount: `${preview.exampleDelayPayoutEth.toFixed(4)} ${this.displayCurrency}`,
+          amount: `${this.ethAmountPipe.transform(preview.exampleDelayPayoutEth)} ${this.displayCurrency}`,
           meta: 'Interpolated payout based on actual delay'
         },
         {
           label: `Delay at ${preview.maxDelayThresholdMinutes}+ minutes`,
-          amount: `${preview.maxDelayPayoutEth.toFixed(4)} ${this.displayCurrency}`,
+          amount: `${this.ethAmountPipe.transform(preview.maxDelayPayoutEth)} ${this.displayCurrency}`,
           meta: 'Maximum delay-based payout'
         },
         {
           label: 'Flight Cancellation',
-          amount: `${preview.cancellationPayoutEth.toFixed(4)} ${this.displayCurrency}`,
+          amount: `${this.ethAmountPipe.transform(preview.cancellationPayoutEth)} ${this.displayCurrency}`,
           meta: 'Automatic disruption payout'
         }
       ];
@@ -298,15 +363,44 @@ export class PurchasePage implements OnInit {
     }
   }
 
+  private async refreshContractData(): Promise<void> {
+    if (!this.quote) {
+      this.premiumBreakdown = null;
+      this.delayCoverageRows = [];
+      return;
+    }
+
+    this.isContractDataLoading = true;
+
+    try {
+      await Promise.all([
+        this.refreshPremiumBreakdown(),
+        this.refreshDelayCoverageRows()
+      ]);
+    } finally {
+      this.isContractDataLoading = false;
+    }
+  }
+
   async buyPolicy(): Promise<void> {
     if (!this.flightSchedule) return;
+    const confirmed = await this.transactionFlow.confirmAction({
+      actionLabel: 'Policy Purchase',
+      confirmDescription: 'Please confirm that you want to purchase this flight insurance policy. You will be asked to approve the transaction in MetaMask next.'
+    });
+
+    if (!confirmed) {
+      return;
+    }
+
     this.isBuying = true;
+    const transactionProgress = this.transactionFlow.openWalletConfirmation('purchase this policy');
 
     try {
       const flightNumber = this.flightSchedule.flightIATA;
       const origin = this.flightSchedule.departureAirportIATA;
       const destination = this.flightSchedule.arrivalAirportIATA;
-      const departureTimeUnix = Math.floor(new Date(this.flightSchedule.departureTime).getTime() / 1000);
+      const departureTimeUnix = this.toUtcUnixTimestamp(this.flightSchedule.departureTime);
       console.log('Departure time (unix):', departureTimeUnix, '| Date:', new Date(departureTimeUnix * 1000).toISOString());
       if (!this.quote) {
         throw new Error('Quote is not available. Please retrieve a quote again.');
@@ -314,17 +408,21 @@ export class PurchasePage implements OnInit {
 
       const premiumInEth = Number(this.quote.quotedPremiumEth).toFixed(6);
 
-      const loadingMsg = this.message.loading('Awaiting wallet confirmation...', { nzDuration: 0 });
-
-      const receipt = await this.contractService.buyPolicy(flightNumber, origin, destination, departureTimeUnix, premiumInEth);
-
-      this.message.remove(loadingMsg.messageId);
-      this.message.success('Policy successfully purchased on-chain!', { nzDuration: 5000 });
+      const { receipt, policyId } = await this.contractService.buyPolicy(
+        flightNumber,
+        origin,
+        destination,
+        departureTimeUnix,
+        premiumInEth,
+        (hash) => transactionProgress.transactionSubmitted(hash)
+      );
+      this.message.success('Policy successfully purchased on-chain. You can view it in your dashboard shortly.', { nzDuration: 5000 });
+      await this.notificationService.refresh();
       console.log('Purchase successful, receipt:', receipt);
 
-      this.router.navigate(['/policies']);
+      await this.router.navigate(policyId ? ['/policies', policyId] : ['/policies']);
     } catch (error: any) {
-      this.message.remove(); // clears all or we could save loadingMsg.messageId. Let's just remove all to be safe or specific:
+      transactionProgress.close();
       console.error('Purchase failed:', error);
       if (error.code === 4001 || error.code === 'ACTION_REJECTED') {
         this.message.error('Transaction was rejected by the wallet.', { nzDuration: 5000 });
@@ -341,5 +439,6 @@ export class PurchasePage implements OnInit {
     this.quote = null;
     this.premiumBreakdown = null;
     this.delayCoverageRows = [];
+    this.isContractDataLoading = false;
   }
 }

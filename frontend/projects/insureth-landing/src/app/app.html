@@ -1,0 +1,234 @@
+<nz-layout class="marketing-layout">
+  <nz-header class="marketing-header">
+    <div class="marketing-header__inner">
+      <a href="#top" class="brand-mark">
+        <img src="/logo.png" alt="Insureth logo" class="brand-mark__logo">
+        <span class="brand-mark__text">Insureth</span>
+      </a>
+
+      <nav class="marketing-nav">
+        <a href="#about">About</a>
+        <a href="#products">Products</a>
+        <a href="#investors">Investors</a>
+        <a href="#faq">FAQ</a>
+      </nav>
+
+      <div class="marketing-header__actions">
+        <a nz-button nzType="primary" class="marketing-header__button marketing-header__button--primary" [href]="portalUrl">Client Portal</a>
+      </div>
+    </div>
+  </nz-header>
+
+  <nz-content>
+    <main id="top" class="marketing-shell">
+      <section class="hero">
+        <div class="hero__copy">
+          <nz-tag nzColor="#efe4ff" class="hero__tag">Parametric insurance, designed for clarity</nz-tag>
+          <h1 class="hero__title">Insureth brings transparent flight protection and investor-backed liquidity onto one platform.</h1>
+          <p class="hero__body">
+            Insureth helps travelers understand what they are buying before departure, then keeps policy verification and payout logic transparent after the flight.
+            Behind the scenes, investor-backed liquidity supports the coverage model without making the customer experience feel complicated.
+          </p>
+
+          <div class="hero__actions">
+            <a nz-button nzType="primary" [href]="portalUrl" class="hero__button hero__button--primary">Explore Client Portal</a>
+            <a nz-button nzType="default" href="#products" class="hero__button">See How It Works</a>
+          </div>
+
+          <div class="hero__microcopy">
+            <span>Flight delay insurance live today</span>
+            <span>Weather parametric insurance planned next</span>
+          </div>
+        </div>
+
+        <div class="hero__panel">
+          <nz-card class="hero-card hero-card--primary">
+            <span class="hero-card__eyebrow">Live coverage</span>
+            <h2>Flight Delay Insurance</h2>
+            <p>
+              Buy cover before departure, follow the verification timeline after takeoff, and let the policy resolve against predefined delay thresholds.
+            </p>
+            <div class="hero-card__metric">
+              <span class="hero-card__metric-value">Chainlink automation</span>
+              <span class="hero-card__metric-label">drives post-departure verification timing</span>
+            </div>
+          </nz-card>
+
+          <div class="hero__stack">
+            <nz-card class="hero-card hero-card--secondary">
+              <span class="hero-card__eyebrow">Capital side</span>
+              <h3>Investors support payouts through the pool</h3>
+              <p>Liquidity providers participate in the underwriting model, making risk and returns more explicit.</p>
+            </nz-card>
+
+            <nz-card class="hero-card hero-card--secondary">
+              <span class="hero-card__eyebrow">Future roadmap</span>
+              <h3>Weather protection can fit the same logic</h3>
+              <p>Parametric triggers and objective data sources make the platform extensible beyond flights.</p>
+            </nz-card>
+          </div>
+        </div>
+      </section>
+
+      <section class="stat-band">
+        <nz-card *ngFor="let stat of statCards" class="stat-band__card" [ngClass]="'stat-band__card--' + stat.tone">
+          <span class="stat-band__value">{{ stat.value }}</span>
+          <span class="stat-band__label">{{ stat.label }}</span>
+        </nz-card>
+      </section>
+
+      <section id="about" class="content-section">
+        <div class="section-heading">
+          <span class="section-heading__eyebrow">What is Insureth?</span>
+          <h2>One platform connecting parametric coverage, oracle verification, and capital provisioning.</h2>
+          <p>
+            Insureth is built to make parametric insurance understandable. Travelers can see what coverage they bought, when verification is expected, and why a payout did
+            or did not happen. Investors support the pool in the background, but the customer experience stays simple and reassuring.
+          </p>
+        </div>
+
+        <div class="feature-grid">
+          <nz-card class="feature-card">
+            <span class="feature-card__icon" nz-icon nzType="rocket" nzTheme="outline"></span>
+            <h3>For travelers</h3>
+            <p>Buy coverage with clear payout tiers, see verification progress after departure, and understand why a policy paid or did not pay.</p>
+          </nz-card>
+
+          <nz-card class="feature-card">
+            <span class="feature-card__icon" nz-icon nzType="bank" nzTheme="outline"></span>
+            <h3>For investors</h3>
+            <p>Provide capital into the liquidity pool and view how premium inflows and payout events affect position performance.</p>
+          </nz-card>
+        </div>
+      </section>
+
+      <section id="products" class="content-section">
+        <div class="section-heading">
+          <span class="section-heading__eyebrow">Products</span>
+          <h2>We are launching with flight delay insurance and designing for future parametric products.</h2>
+        </div>
+
+        <div class="product-grid">
+          <nz-card *ngFor="let product of liveProducts" class="product-card product-card--live">
+            <div class="product-card__header">
+              <h3>{{ product.title }}</h3>
+              <nz-tag nzColor="success">{{ product.badge }}</nz-tag>
+            </div>
+            <p>{{ product.description }}</p>
+            <ul class="product-card__list">
+              <li *ngFor="let bullet of product.bullets">{{ bullet }}</li>
+            </ul>
+          </nz-card>
+
+          <nz-card *ngFor="let product of upcomingProducts" class="product-card product-card--future">
+            <div class="product-card__header">
+              <h3>{{ product.title }}</h3>
+              <nz-tag nzColor="#efe4ff">{{ product.badge }}</nz-tag>
+            </div>
+            <p>{{ product.description }}</p>
+          </nz-card>
+        </div>
+      </section>
+
+      <section class="content-section">
+        <div class="section-heading">
+          <span class="section-heading__eyebrow">Traveler experience</span>
+          <h2>How policy protection moves from quote to verified outcome.</h2>
+        </div>
+
+        <div class="journey-grid">
+          <nz-card *ngFor="let step of travelerSteps; let i = index" class="journey-card">
+            <div class="journey-card__number">{{ i + 1 }}</div>
+            <h3>{{ step.title }}</h3>
+            <p>{{ step.body }}</p>
+          </nz-card>
+        </div>
+      </section>
+
+      <section id="investors" class="content-section content-section--split">
+        <div class="section-heading section-heading--compact">
+          <span class="section-heading__eyebrow">Investor model</span>
+          <h2>Liquidity pools turn passive capital into visible underwriting participation.</h2>
+          <p>
+            Insureth is designed so that the capital side is not hidden. Investors can see open positions, pool value, and how verified payouts influence the pool.
+          </p>
+        </div>
+
+        <div class="investor-grid">
+          <nz-card *ngFor="let step of investorSteps" class="investor-card">
+            <h3>{{ step.title }}</h3>
+            <p>{{ step.body }}</p>
+          </nz-card>
+
+          <nz-card class="investor-card investor-card--highlight">
+            <span class="investor-card__eyebrow">Why this matters</span>
+            <h3>Insurance and capital should feel connected, not siloed.</h3>
+            <p>
+              The client portal can explain policies to travelers while the investor view can explain pool mechanics to capital providers, all using the same underlying system.
+            </p>
+          </nz-card>
+        </div>
+      </section>
+
+      <section class="content-section">
+        <div class="section-heading">
+          <span class="section-heading__eyebrow">Trust architecture</span>
+          <h2>Why users can understand what the system is doing.</h2>
+        </div>
+
+        <div class="feature-grid">
+          <nz-card *ngFor="let point of trustPoints" class="feature-card feature-card--trust">
+            <h3>{{ point.title }}</h3>
+            <p>{{ point.body }}</p>
+          </nz-card>
+        </div>
+      </section>
+
+      <section id="faq" class="content-section">
+        <div class="section-heading">
+          <span class="section-heading__eyebrow">FAQ</span>
+          <h2>Questions people usually ask when they first encounter Insureth.</h2>
+        </div>
+
+        <nz-collapse class="faq-collapse" nzGhost>
+          <nz-collapse-panel *ngFor="let item of faqs; let i = index" [nzHeader]="item.title" [nzActive]="i === 0">
+            <p class="faq-collapse__body">{{ item.body }}</p>
+          </nz-collapse-panel>
+        </nz-collapse>
+      </section>
+
+      <section class="cta-panel">
+        <div>
+          <span class="section-heading__eyebrow">Ready to explore?</span>
+          <h2>See how a customer experiences Insureth from quote to verification.</h2>
+          <p>
+            The landing page introduces the product. The client portal lets travelers and investors explore the live experience behind the coverage model.
+          </p>
+        </div>
+
+        <div class="cta-panel__actions">
+          <a nz-button nzType="primary" [href]="portalUrl" class="hero__button hero__button--primary">Open Client Portal</a>
+        </div>
+      </section>
+    </main>
+  </nz-content>
+
+  <nz-footer class="marketing-footer">
+    <div class="marketing-footer__inner">
+      <a href="#top" class="brand-mark brand-mark--footer">
+        <img src="/logo-remove-bg.png" alt="Insureth logo" class="brand-mark__logo">
+        <span class="brand-mark__text">Insureth</span>
+      </a>
+
+      <p class="marketing-footer__copy">
+        Parametric insurance infrastructure for travelers, operators, and investors.
+      </p>
+
+      <div class="marketing-footer__links">
+        <a href="#products">Products</a>
+        <a href="#investors">Investors</a>
+        <a href="#faq">FAQ</a>
+      </div>
+    </div>
+  </nz-footer>
+</nz-layout>

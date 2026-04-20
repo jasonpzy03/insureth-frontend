@@ -19,14 +19,33 @@
         <nz-form-label [nzSpan]="24">IATA Code</nz-form-label>
         <nz-form-control [nzSpan]="24"><input nz-input formControlName="iataCode"></nz-form-control>
       </nz-form-item>
-      <nz-form-item>
-        <nz-form-label [nzSpan]="24">ICAO Code</nz-form-label>
-        <nz-form-control [nzSpan]="24"><input nz-input formControlName="icaoCode"></nz-form-control>
-      </nz-form-item>
-      <nz-form-item>
-        <nz-form-label [nzSpan]="24">Supported For Flight Insurance</nz-form-label>
-        <nz-form-control [nzSpan]="24"><nz-switch formControlName="supportedForFlightInsurance"></nz-switch></nz-form-control>
-      </nz-form-item>
+        <nz-form-item>
+          <nz-form-label [nzSm]="6" [nzXs]="24">ICAO Code</nz-form-label>
+          <nz-form-control [nzSm]="14" [nzXs]="24">
+            <input nz-input formControlName="icaoCode" placeholder="Enter ICAO code" />
+          </nz-form-control>
+        </nz-form-item>
+
+        <nz-form-item>
+          <nz-form-label [nzSm]="6" [nzXs]="24">Timezone</nz-form-label>
+          <nz-form-control [nzSm]="14" [nzXs]="24" nzExtra="Primary timezone assigned during sync. Manual update override.">
+            <input nz-input formControlName="timezone" placeholder="e.g. Europe/Paris" />
+          </nz-form-control>
+        </nz-form-item>
+
+        <nz-form-item>
+          <nz-form-label [nzSm]="6" [nzXs]="24">Country Code</nz-form-label>
+          <nz-form-control [nzSm]="14" [nzXs]="24">
+            <input nz-input formControlName="countryCode" readonly />
+          </nz-form-control>
+        </nz-form-item>
+
+        <nz-form-item>
+          <nz-form-label [nzSm]="6" [nzXs]="24">Supported for Flight Insurance</nz-form-label>
+          <nz-form-control [nzSm]="14" [nzXs]="24">
+            <nz-switch formControlName="supportedForFlightInsurance"></nz-switch>
+          </nz-form-control>
+        </nz-form-item>
       <button nz-button nzType="primary" type="button" (click)="save()" [disabled]="isSaving()" [nzLoading]="isSaving()">Save</button>
     </form>
   </nz-card>

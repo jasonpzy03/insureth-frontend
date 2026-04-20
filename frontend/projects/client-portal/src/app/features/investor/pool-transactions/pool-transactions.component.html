@@ -14,7 +14,9 @@
     </div>
   </div>
 
-  <nz-skeleton [nzLoading]="isLoading" [nzActive]="true" [nzParagraph]="{ rows: 6 }"></nz-skeleton>
+  <nz-card *ngIf="isLoading" class="shadow-sm border-0 rounded-2xl overflow-hidden bg-white">
+    <nz-skeleton [nzLoading]="true" [nzActive]="true" [nzParagraph]="{ rows: 6 }"></nz-skeleton>
+  </nz-card>
 
   <nz-card *ngIf="!isLoading" nzTitle="Pool Activity" class="shadow-sm border-0 rounded-2xl overflow-hidden" [nzBodyStyle]="{padding: '0'}">
     <nz-table [nzData]="transactions" [nzShowPagination]="transactions.length > 10" [nzPageSize]="10">

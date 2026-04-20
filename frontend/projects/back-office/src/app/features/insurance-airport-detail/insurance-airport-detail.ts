@@ -34,6 +34,8 @@ export class InsuranceAirportDetailPage {
     name: ['', [Validators.required]],
     iataCode: ['', [Validators.required]],
     icaoCode: ['', [Validators.required]],
+    timezone: [''],
+    countryCode: [''],
     supportedForFlightInsurance: [false, [Validators.required]]
   });
 

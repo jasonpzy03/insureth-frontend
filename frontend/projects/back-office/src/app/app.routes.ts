@@ -20,6 +20,10 @@ export const routes: Routes = [
         loadComponent: () => import('./features/users/users').then(m => m.BackofficeUsersPage)
       },
       {
+        path: 'policy-operations',
+        loadComponent: () => import('./features/policy-operations/policy-operations').then(m => m.PolicyOperationsPage)
+      },
+      {
         path: 'audit-trail/auth',
         loadComponent: () => import('./features/audit-auth/audit-auth').then(m => m.AuditAuthPage)
       },

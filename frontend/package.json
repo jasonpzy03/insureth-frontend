@@ -5,10 +5,11 @@
     "ng": "ng",
     "start:client": "ng serve client-portal --port 4200",
     "start:backoffice": "ng serve back-office --port 4300",
+    "start:landing": "ng serve insureth-landing --port 4400",
     "build": "ng build",
+    "build:landing": "ng build insureth-landing",
     "watch": "ng build --watch --configuration development",
-    "test": "ng test",
-    "serve:ssr:client-portal": "node dist/client-portal/server/server.mjs"
+    "test": "ng test"
   },
   "prettier": {
     "overrides": [

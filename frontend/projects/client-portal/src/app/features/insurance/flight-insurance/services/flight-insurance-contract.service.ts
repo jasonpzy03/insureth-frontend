@@ -9,6 +9,24 @@ import { FLIGHT_INSURANCE_CONTRACT_ADDRESS, FLIGHT_INSURANCE_ABI } from '../cons
 export class FlightInsuranceContractService {
   private walletService = inject(WalletService);
 
+  private extractPolicyIdFromReceipt(contract: Contract, receipt: any): string | null {
+    const logs = receipt?.logs ?? [];
+
+    for (const log of logs) {
+      try {
+        const parsed = contract.interface.parseLog(log);
+        if (parsed?.name === 'PolicyPurchased') {
+          const policyId = parsed.args?.['policyId'] ?? parsed.args?.[0];
+          return policyId != null ? policyId.toString() : null;
+        }
+      } catch {
+        // Ignore logs that do not belong to this contract interface.
+      }
+    }
+
+    return null;
+  }
+
   private extractErrorMessage(error: any): string | null {
     if (!error) {
       return null;
@@ -156,6 +174,7 @@ export class FlightInsuranceContractService {
     const [
       minPurchaseLeadTime,
       maxPurchaseLeadTime,
+      postDeparturePurchaseGracePeriod,
       grossBreakdown,
       freeLiquidity,
       walletAddress,
@@ -163,6 +182,7 @@ export class FlightInsuranceContractService {
     ] = await Promise.all([
       contract['minPurchaseLeadTime'](),
       contract['maxPurchaseLeadTime'](),
+      contract['postDeparturePurchaseGracePeriod'](),
       contract['getPremiumBreakdown'](premiumInWei),
       contract['totalFreeLiquidity'](),
       signer.getAddress(),
@@ -172,8 +192,9 @@ export class FlightInsuranceContractService {
     const now = Math.floor(Date.now() / 1000);
     const minLeadSeconds = Number(minPurchaseLeadTime);
     const maxLeadSeconds = Number(maxPurchaseLeadTime);
+    const postDepartureGraceSeconds = Number(postDeparturePurchaseGracePeriod);
 
-    if (departureTime <= now + minLeadSeconds) {
+    if (departureTime + postDepartureGraceSeconds <= now + minLeadSeconds) {
       throw new Error('Too late to buy');
     }
 
@@ -253,7 +274,17 @@ export class FlightInsuranceContractService {
   /**
    * Triggers the smart contract buyPolicy function.
    */
-  async buyPolicy(flightNumber: string, origin: string, destination: string, departureTime: number, premiumInEth: string): Promise<any> {
+  async buyPolicy(
+    flightNumber: string,
+    origin: string,
+    destination: string,
+    departureTime: number,
+    premiumInEth: string,
+    onTransactionSubmitted?: (hash: string) => void | Promise<void>
+  ): Promise<{
+    receipt: any;
+    policyId: string | null;
+  }> {
     const signer = await this.walletService.getSigner();
 
     if (!signer) {
@@ -294,12 +325,16 @@ export class FlightInsuranceContractService {
     }
 
     console.log('Transaction sent! Hash:', tx.hash);
+    await onTransactionSubmitted?.(tx.hash);
 
     // Wait for the transaction to be confirmed
     const receipt = await tx.wait();
     console.log('Transaction confirmed! Receipt:', receipt);
 
-    return receipt;
+    return {
+      receipt,
+      policyId: this.extractPolicyIdFromReceipt(contract, receipt)
+    };
   }
 
   /**
@@ -311,6 +346,7 @@ export class FlightInsuranceContractService {
 
     const address = await signer.getAddress();
     const contract = new Contract(FLIGHT_INSURANCE_CONTRACT_ADDRESS, FLIGHT_INSURANCE_ABI, signer);
+    const verificationBufferSeconds = Number(await contract['verificationBuffer']());
 
     // Using ethers 6 querying
     const filter = contract.filters['PolicyPurchased'](null, address);
@@ -332,6 +368,7 @@ export class FlightInsuranceContractService {
       // Query the struct data directly from the public storage mapping
       const policyData = await contract['policies'](policyId);
       const riskData = await contract['risks'](riskKey);
+      const purchaseBlock = await (event as any).getBlock();
 
       policies.push({
         policyId: policyId.toString(),
@@ -339,9 +376,15 @@ export class FlightInsuranceContractService {
         origin: riskData.origin,
         destination: riskData.destination,
         departureTime: Number(riskData.departureTime) * 1000, // convert back to ms for JS Date
+        purchaseTimestamp: purchaseBlock ? purchaseBlock.timestamp * 1000 : null,
+        verificationBufferSeconds,
+        verificationEligibleAt: (Number(riskData.departureTime) + verificationBufferSeconds) * 1000,
         premium: formatEther(policyData.premium),
         premiumPaid: formatEther(premiumPaid ?? policyData.premium),
         status: Number(riskData.status),
+        delayMinutes: Number(riskData.delayMinutes),
+        oracleRequested: Boolean(riskData.oracleRequested),
+        resolved: Boolean(riskData.resolved),
         active: policyData.active,
         claimed: policyData.claimed,
         payoutAmount: formatEther(policyData.payoutAmount),
@@ -362,6 +405,7 @@ export class FlightInsuranceContractService {
 
     const address = await signer.getAddress();
     const contract = new Contract(FLIGHT_INSURANCE_CONTRACT_ADDRESS, FLIGHT_INSURANCE_ABI, signer);
+    const verificationBufferSeconds = Number(await contract['verificationBuffer']());
 
     const policyId = BigInt(policyIdStr);
     const policyData = await contract['policies'](policyId);
@@ -387,10 +431,19 @@ export class FlightInsuranceContractService {
       const purchaseTx = purchaseEvents[0];
       const block = await purchaseTx.getBlock();
       const purchaseArgs = (purchaseTx as any).args ?? [];
+      const grossPremium = purchaseArgs[7] ?? purchaseArgs.premiumPaid ?? policyData.premium;
+      const grossPremiumEth = formatEther(grossPremium);
+      const netPremiumEth = formatEther(policyData.premium);
+      const feeAmountEth = Number(grossPremiumEth) > Number(netPremiumEth)
+        ? (Number(grossPremiumEth) - Number(netPremiumEth)).toFixed(6)
+        : '0.000000';
       transactions.push({
         type: 'PURCHASE',
         hash: purchaseTx.transactionHash,
-        amount: formatEther(purchaseArgs[7] ?? purchaseArgs.premiumPaid ?? policyData.premium),
+        amount: grossPremiumEth,
+        grossAmount: grossPremiumEth,
+        netAmount: netPremiumEth,
+        feeAmount: feeAmountEth,
         timestamp: block ? block.timestamp * 1000 : Date.now(),
         label: 'Premium Paid'
       });
@@ -417,11 +470,19 @@ export class FlightInsuranceContractService {
         origin: riskData.origin,
         destination: riskData.destination,
         departureTime: Number(riskData.departureTime) * 1000,
+        purchaseTimestamp: purchaseEvents.length > 0
+          ? ((await purchaseEvents[0].getBlock())?.timestamp ?? 0) * 1000
+          : null,
+        verificationBufferSeconds,
+        verificationEligibleAt: (Number(riskData.departureTime) + verificationBufferSeconds) * 1000,
         premium: formatEther(policyData.premium),
         premiumPaid: purchaseEvents.length > 0
           ? formatEther(((purchaseEvents[0] as any).args ?? [])[7] ?? ((purchaseEvents[0] as any).args ?? []).premiumPaid ?? policyData.premium)
           : formatEther(policyData.premium),
         status: Number(riskData.status),
+        delayMinutes: Number(riskData.delayMinutes),
+        oracleRequested: Boolean(riskData.oracleRequested),
+        resolved: Boolean(riskData.resolved),
         active: policyData.active,
         claimed: policyData.claimed,
         payoutAmount: formatEther(policyData.payoutAmount)
@@ -437,7 +498,10 @@ export class FlightInsuranceContractService {
   /**
    * Investor: Provide liquidity to the pool
    */
-  async provideLiquidity(amountInEth: string): Promise<any> {
+  async provideLiquidity(
+    amountInEth: string,
+    onTransactionSubmitted?: (hash: string) => void | Promise<void>
+  ): Promise<any> {
     const signer = await this.walletService.getSigner();
     if (!signer) throw new Error('Wallet not connected');
 
@@ -454,6 +518,7 @@ export class FlightInsuranceContractService {
       throw this.normalizeError(error);
     }
     console.log('Provide liquidity tx sent:', tx.hash);
+    await onTransactionSubmitted?.(tx.hash);
 
     const receipt = await tx.wait();
     console.log('Liquidity provision confirmed:', receipt);
@@ -463,7 +528,10 @@ export class FlightInsuranceContractService {
   /**
    * Investor: Withdraw base capital from free liquidity
    */
-  async withdrawCapital(amountInEth: string): Promise<any> {
+  async withdrawCapital(
+    amountInEth: string,
+    onTransactionSubmitted?: (hash: string) => void | Promise<void>
+  ): Promise<any> {
     const signer = await this.walletService.getSigner();
     if (!signer) throw new Error('Wallet not connected');
 
@@ -480,6 +548,7 @@ export class FlightInsuranceContractService {
       throw this.normalizeError(error);
     }
     console.log('Withdraw capital tx sent:', tx.hash);
+    await onTransactionSubmitted?.(tx.hash);
 
     const receipt = await tx.wait();
     console.log('Withdrawal confirmed:', receipt);
@@ -490,22 +559,48 @@ export class FlightInsuranceContractService {
    * Reads share-based investor stats from the latest contract.
    * Value already includes profit/loss via share price, so there is no separate claim flow.
    */
-  async getInvestorData(): Promise<{ shares: number; totalValue: number; maxWithdrawable: number }> {
+  async getInvestorData(): Promise<{
+    shares: number;
+    totalValue: number;
+    maxWithdrawable: number;
+    sharesExact: string;
+    totalValueExact: string;
+    maxWithdrawableExact: string;
+  }> {
     const signer = await this.walletService.getSigner();
-    if (!signer) return { shares: 0, totalValue: 0, maxWithdrawable: 0 };
+    if (!signer) {
+      return {
+        shares: 0,
+        totalValue: 0,
+        maxWithdrawable: 0,
+        sharesExact: '0',
+        totalValueExact: '0',
+        maxWithdrawableExact: '0'
+      };
+    }
 
     const address = await signer.getAddress();
     const contract = new Contract(FLIGHT_INSURANCE_CONTRACT_ADDRESS, FLIGHT_INSURANCE_ABI, signer);
 
     try {
       const data = await contract['getInvestorInfo'](address);
-      const shares = Number(formatEther(data.shares));
-      const totalValue = Number(formatEther(data.totalValue));
-      const maxWithdrawable = Number(formatEther(data.withdrawableNow));
-      return { shares, totalValue, maxWithdrawable };
+      const sharesExact = formatEther(data.shares);
+      const totalValueExact = formatEther(data.totalValue);
+      const maxWithdrawableExact = formatEther(data.withdrawableNow);
+      const shares = Number(sharesExact);
+      const totalValue = Number(totalValueExact);
+      const maxWithdrawable = Number(maxWithdrawableExact);
+      return { shares, totalValue, maxWithdrawable, sharesExact, totalValueExact, maxWithdrawableExact };
     } catch (err) {
       console.error('Failed to read investor data:', err);
-      return { shares: 0, totalValue: 0, maxWithdrawable: 0 };
+      return {
+        shares: 0,
+        totalValue: 0,
+        maxWithdrawable: 0,
+        sharesExact: '0',
+        totalValueExact: '0',
+        maxWithdrawableExact: '0'
+      };
     }
   }
 
@@ -657,10 +752,36 @@ export class FlightInsuranceContractService {
       .filter((tx) => tx.type === 'WITHDRAWAL')
       .reduce((sum, tx) => sum + Number(tx.amount), 0);
 
+    const chronologicalTransactions = [...transactions].sort((a, b) => a.timestamp - b.timestamp);
+    let openShares = 0;
+    let openCostBasis = 0;
+
+    for (const tx of chronologicalTransactions) {
+      if (tx.type === 'DEPOSIT') {
+        openShares += Number(tx.sharesDelta ?? 0);
+        openCostBasis += Number(tx.amount);
+        continue;
+      }
+
+      if (tx.type === 'WITHDRAWAL') {
+        const sharesBurned = Number(tx.sharesDelta ?? 0);
+        if (openShares > 0 && sharesBurned > 0) {
+          const averageCostPerShare = openCostBasis / openShares;
+          openCostBasis -= averageCostPerShare * sharesBurned;
+          openShares -= sharesBurned;
+        }
+
+        if (openShares <= 0.000000001 || openCostBasis <= 0.000000001) {
+          openShares = 0;
+          openCostBasis = 0;
+        }
+      }
+    }
+
     return {
       totalDeposited: +totalDeposited.toFixed(6),
       totalWithdrawn: +totalWithdrawn.toFixed(6),
-      netCapitalInvested: +(totalDeposited - totalWithdrawn).toFixed(6)
+      netCapitalInvested: +openCostBasis.toFixed(6)
     };
   }
 

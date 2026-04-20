@@ -8,10 +8,12 @@ import { NzFormModule } from 'ng-zorro-antd/form';
 import { NzInputModule } from 'ng-zorro-antd/input';
 import { NzInputNumberModule } from 'ng-zorro-antd/input-number';
 import { NzMessageService } from 'ng-zorro-antd/message';
+import { NzModalModule } from 'ng-zorro-antd/modal';
 import { NzSelectModule } from 'ng-zorro-antd/select';
 import { NzTagModule } from 'ng-zorro-antd/tag';
 import { FlightInsuranceAdminService, FlightInsuranceAdminSnapshot } from './flight-insurance-admin.service';
 import { FLIGHT_INSURANCE_CONTRACT_ADDRESS } from './flight-insurance-admin.constants';
+import { TransactionFlowService } from '../../core/services/transaction-flow.service';
 
 @Component({
   selector: 'app-contract-admin-page',
@@ -25,6 +27,7 @@ import { FLIGHT_INSURANCE_CONTRACT_ADDRESS } from './flight-insurance-admin.cons
     NzFormModule,
     NzInputModule,
     NzInputNumberModule,
+    NzModalModule,
     NzSelectModule,
     NzTagModule
   ],
@@ -35,6 +38,7 @@ export class ContractAdminPage {
   private readonly fb = inject(FormBuilder);
   private readonly adminService = inject(FlightInsuranceAdminService);
   private readonly message = inject(NzMessageService);
+  private readonly transactionFlow = inject(TransactionFlowService);
 
   readonly contractAddress = FLIGHT_INSURANCE_CONTRACT_ADDRESS;
   readonly snapshot = signal<FlightInsuranceAdminSnapshot | null>(null);
@@ -42,8 +46,6 @@ export class ContractAdminPage {
   readonly isLoading = signal(false);
   readonly chainlinkSaving = signal(false);
   readonly controlsSaving = signal(false);
-  readonly simulationSaving = signal(false);
-  readonly computedRiskKey = signal<string | null>(null);
 
   readonly isOwner = computed(() => this.snapshot()?.isOwner ?? false);
   readonly feeModeOptions = [
@@ -61,6 +63,7 @@ export class ContractAdminPage {
     verificationBufferSeconds: [7200, [Validators.required, Validators.min(0)]],
     minPurchaseLeadTimeSeconds: [3600, [Validators.required, Validators.min(0)]],
     maxPurchaseLeadTimeSeconds: [2592000, [Validators.required, Validators.min(1)]],
+    postDeparturePurchaseGracePeriodSeconds: [0, [Validators.required, Validators.min(0)]],
     platformFeeMode: [0, [Validators.required]],
     platformFeePercentage: [5, [Validators.required, Validators.min(0), Validators.max(100)]],
     platformFeeFlatAmountEth: [0, [Validators.required, Validators.min(0)]],
@@ -69,16 +72,6 @@ export class ContractAdminPage {
     minDelayPayoutMultiplierPercent: [150, [Validators.required, Validators.min(0)]],
     maxDelayPayoutMultiplierPercent: [300, [Validators.required, Validators.min(0)]],
     cancellationPayoutMultiplierPercent: [300, [Validators.required, Validators.min(0)]]
-  });
-
-  readonly simulationForm = this.fb.nonNullable.group({
-    flightNumber: ['', [Validators.required]],
-    origin: ['', [Validators.required]],
-    destination: ['', [Validators.required]],
-    departureTimeUnix: [0, [Validators.required, Validators.min(1)]],
-    riskKey: [''],
-    statusInt: [2, [Validators.required, Validators.min(0), Validators.max(3)]],
-    delayMinutes: [120, [Validators.required]]
   });
 
   constructor() {
@@ -101,6 +94,7 @@ export class ContractAdminPage {
         verificationBufferSeconds: snapshot.verificationBufferSeconds,
         minPurchaseLeadTimeSeconds: snapshot.minPurchaseLeadTimeSeconds,
         maxPurchaseLeadTimeSeconds: snapshot.maxPurchaseLeadTimeSeconds,
+        postDeparturePurchaseGracePeriodSeconds: snapshot.postDeparturePurchaseGracePeriodSeconds,
         platformFeeMode: snapshot.platformFeeMode,
         platformFeePercentage: snapshot.platformFeePercentage,
         platformFeeFlatAmountEth: snapshot.platformFeeFlatAmountEth,
@@ -123,13 +117,29 @@ export class ContractAdminPage {
       return;
     }
 
+    const confirmed = await this.transactionFlow.confirmAction({
+      actionLabel: 'Chainlink Configuration Update',
+      confirmDescription: 'Please confirm that you want to update the Chainlink configuration. You will be asked to approve the transaction in MetaMask next.'
+    });
+
+    if (!confirmed) {
+      return;
+    }
+
     this.chainlinkSaving.set(true);
+    const transactionProgress = this.transactionFlow.openWalletConfirmation('update the Chainlink configuration');
     try {
       const { sourceCode, subscriptionId, gasLimit } = this.chainlinkForm.getRawValue();
-      await this.adminService.setChainlinkConfig(sourceCode, subscriptionId, gasLimit);
+      await this.adminService.setChainlinkConfig(
+        sourceCode,
+        subscriptionId,
+        gasLimit,
+        (hash) => transactionProgress.transactionSubmitted(hash)
+      );
       this.message.success('Chainlink config updated.');
       await this.refreshSnapshot();
     } catch (error: any) {
+      transactionProgress.close();
       this.message.error(error?.message || 'Failed to update Chainlink config.');
     } finally {
       this.chainlinkSaving.set(false);
@@ -142,12 +152,23 @@ export class ContractAdminPage {
       return;
     }
 
+    const confirmed = await this.transactionFlow.confirmAction({
+      actionLabel: 'Admin Controls Update',
+      confirmDescription: 'Please confirm that you want to update the smart contract admin controls. You will be asked to approve the transaction in MetaMask next.'
+    });
+
+    if (!confirmed) {
+      return;
+    }
+
     this.controlsSaving.set(true);
+    const transactionProgress = this.transactionFlow.openWalletConfirmation('update the admin controls');
     try {
       const {
         verificationBufferSeconds,
         minPurchaseLeadTimeSeconds,
         maxPurchaseLeadTimeSeconds,
+        postDeparturePurchaseGracePeriodSeconds,
         platformFeeMode,
         platformFeePercentage,
         platformFeeFlatAmountEth,
@@ -163,6 +184,7 @@ export class ContractAdminPage {
         verificationBufferSeconds,
         minPurchaseLeadTimeSeconds,
         maxPurchaseLeadTimeSeconds,
+        postDeparturePurchaseGracePeriodSeconds,
         platformFeeMode,
         platformFeePercentage,
         platformFeeFlatAmountEth,
@@ -171,54 +193,16 @@ export class ContractAdminPage {
         minDelayPayoutMultiplierBps: Math.round(minDelayPayoutMultiplierPercent * 100),
         maxDelayPayoutMultiplierBps: Math.round(maxDelayPayoutMultiplierPercent * 100),
         cancellationPayoutMultiplierBps: Math.round(cancellationPayoutMultiplierPercent * 100)
-      });
+      }, (hash) => transactionProgress.transactionSubmitted(hash));
 
       this.message.success('Admin controls updated.');
       await this.refreshSnapshot();
     } catch (error: any) {
+      transactionProgress.close();
       this.message.error(error?.message || 'Failed to update owner controls.');
     } finally {
       this.controlsSaving.set(false);
     }
   }
 
-  async computeRiskKey(): Promise<void> {
-    const { flightNumber, origin, destination, departureTimeUnix } = this.simulationForm.getRawValue();
-    if (!flightNumber || !origin || !destination || !departureTimeUnix) {
-      this.simulationForm.markAllAsTouched();
-      return;
-    }
-
-    try {
-      const riskKey = await this.adminService.computeRiskKey(
-        flightNumber,
-        origin,
-        destination,
-        departureTimeUnix
-      );
-      this.computedRiskKey.set(riskKey);
-      this.simulationForm.patchValue({ riskKey });
-      this.message.success('Risk key computed.');
-    } catch (error: any) {
-      this.message.error(error?.message || 'Unable to compute risk key.');
-    }
-  }
-
-  async simulateFlightResult(): Promise<void> {
-    if (this.simulationForm.invalid || !this.simulationForm.controls.riskKey.value) {
-      this.simulationForm.markAllAsTouched();
-      return;
-    }
-
-    this.simulationSaving.set(true);
-    try {
-      const { riskKey, statusInt, delayMinutes } = this.simulationForm.getRawValue();
-      await this.adminService.simulateFlightResult(riskKey, statusInt, delayMinutes);
-      this.message.success('Flight result simulated successfully.');
-    } catch (error: any) {
-      this.message.error(error?.message || 'Failed to simulate flight result.');
-    } finally {
-      this.simulationSaving.set(false);
-    }
-  }
 }

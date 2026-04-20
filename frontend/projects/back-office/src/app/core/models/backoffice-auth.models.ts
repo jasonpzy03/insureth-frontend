@@ -4,13 +4,23 @@ export type BackofficeUser = {
   email: string;
   walletAddress: string;
   role: string;
+  roles: string[];
+  rights: string[];
 };
 
 export type BackofficeUserCreateRequest = {
   username: string;
   email: string;
   walletAddress: string;
-  role: string;
+  role?: string;
+  roles: string[];
+};
+
+export type BackofficeRole = {
+  roleId: number;
+  name: string;
+  description: string;
+  rights: string[];
 };
 
 export type BackofficeNonceResponse = {

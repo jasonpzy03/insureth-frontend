@@ -1,6 +1,6 @@
 <div class="bo-contract-shell">
   <div class="bo-contract-intro">
-    <p class="bo-contract-subtitle">Admin console for owner-only flight insurance controls. Update protocol settings, Chainlink configuration, and local test hooks from a single internal workspace.</p>
+    <p class="bo-contract-subtitle">Admin console for owner-only flight insurance controls. Update protocol settings and Chainlink configuration from a single internal workspace.</p>
   </div>
 
   <nz-alert
@@ -107,6 +107,13 @@
         </nz-form-item>
 
         <nz-form-item>
+          <nz-form-label [nzSpan]="24" nzFor="postDeparturePurchaseGracePeriodSeconds">Post-Departure Purchase Grace (seconds)</nz-form-label>
+          <nz-form-control [nzSpan]="24">
+            <nz-input-number id="postDeparturePurchaseGracePeriodSeconds" class="w-full" formControlName="postDeparturePurchaseGracePeriodSeconds"></nz-input-number>
+          </nz-form-control>
+        </nz-form-item>
+
+        <nz-form-item>
           <nz-form-label [nzSpan]="24" nzFor="platformFeeMode">Platform Fee Mode</nz-form-label>
           <nz-form-control [nzSpan]="24">
             <nz-select id="platformFeeMode" formControlName="platformFeeMode">
@@ -166,81 +173,6 @@
 
         <div class="bo-contract-form__actions">
           <button nz-button nzType="primary" [disabled]="!isOwner() || controlsSaving()" [nzLoading]="controlsSaving()">Save Controls</button>
-        </div>
-      </form>
-    </nz-card>
-
-    <nz-card class="bo-contract-card bo-contract-card--wide">
-      <div class="bo-contract-card__header">
-        <div>
-          <span class="bo-contract-card__eyebrow">Testing</span>
-          <h2>Flight Result Simulation</h2>
-        </div>
-      </div>
-
-      <p class="bo-contract-note">This uses the local testing hook `simulateFlightResult(...)`. Keep it for development and internal testnets only.</p>
-
-      <form nz-form [formGroup]="simulationForm" class="bo-contract-form">
-        <div class="bo-contract-form__grid">
-          <nz-form-item>
-            <nz-form-label [nzSpan]="24" nzFor="flightNumber">Flight Number</nz-form-label>
-            <nz-form-control [nzSpan]="24">
-              <input id="flightNumber" nz-input formControlName="flightNumber" placeholder="SQ318">
-            </nz-form-control>
-          </nz-form-item>
-
-          <nz-form-item>
-            <nz-form-label [nzSpan]="24" nzFor="origin">Origin</nz-form-label>
-            <nz-form-control [nzSpan]="24">
-              <input id="origin" nz-input formControlName="origin" placeholder="SIN">
-            </nz-form-control>
-          </nz-form-item>
-
-          <nz-form-item>
-            <nz-form-label [nzSpan]="24" nzFor="destination">Destination</nz-form-label>
-            <nz-form-control [nzSpan]="24">
-              <input id="destination" nz-input formControlName="destination" placeholder="LHR">
-            </nz-form-control>
-          </nz-form-item>
-
-          <nz-form-item>
-            <nz-form-label [nzSpan]="24" nzFor="departureTimeUnix">Departure Time (unix seconds)</nz-form-label>
-            <nz-form-control [nzSpan]="24">
-              <nz-input-number id="departureTimeUnix" class="w-full" formControlName="departureTimeUnix"></nz-input-number>
-            </nz-form-control>
-          </nz-form-item>
-        </div>
-
-        <div class="bo-contract-inline-actions">
-          <button nz-button nzType="default" type="button" (click)="computeRiskKey()" [disabled]="!isOwner()">Compute Risk Key</button>
-          <span class="bo-contract-riskkey" *ngIf="computedRiskKey()">{{ computedRiskKey() }}</span>
-        </div>
-
-        <nz-form-item>
-          <nz-form-label [nzSpan]="24" nzFor="riskKey">Risk Key</nz-form-label>
-          <nz-form-control [nzSpan]="24">
-            <input id="riskKey" nz-input formControlName="riskKey" placeholder="0x...">
-          </nz-form-control>
-        </nz-form-item>
-
-        <div class="bo-contract-form__grid">
-          <nz-form-item>
-            <nz-form-label [nzSpan]="24" nzFor="statusInt">Flight Status</nz-form-label>
-            <nz-form-control [nzSpan]="24">
-            <nz-input-number id="statusInt" class="w-full" formControlName="statusInt"></nz-input-number>
-          </nz-form-control>
-        </nz-form-item>
-
-          <nz-form-item>
-            <nz-form-label [nzSpan]="24" nzFor="delayMinutes">Delay Minutes</nz-form-label>
-            <nz-form-control [nzSpan]="24">
-              <nz-input-number id="delayMinutes" class="w-full" formControlName="delayMinutes"></nz-input-number>
-            </nz-form-control>
-          </nz-form-item>
-        </div>
-
-        <div class="bo-contract-form__actions">
-          <button nz-button nzType="primary" type="button" (click)="simulateFlightResult()" [disabled]="!isOwner() || simulationSaving()" [nzLoading]="simulationSaving()">Simulate Flight Result</button>
         </div>
       </form>
     </nz-card>

@@ -1,6 +1,6 @@
 <div class="insurance-config-shell">
   <div class="insurance-config-intro">
-    <p class="insurance-config-subtitle">Manage the flight insurance pricing model and payout thresholds from one internal workspace.</p>
+    <p class="insurance-config-subtitle">Manage the off-chain quote engine inputs from one internal workspace. Settlement thresholds and payout rules are controlled on-chain in Contract Admin.</p>
   </div>
 
   <nz-alert
@@ -24,8 +24,8 @@
     <nz-card class="insurance-config-card insurance-config-card--wide">
       <div class="insurance-config-card__header">
         <div>
-          <span class="insurance-config-card__eyebrow">Pricing & Payouts</span>
-          <h2>Commercial Rules</h2>
+          <span class="insurance-config-card__eyebrow">Quote Engine</span>
+          <h2>Off-Chain Pricing Settings</h2>
         </div>
       </div>
 
@@ -45,42 +45,7 @@
           <nz-form-control [nzSpan]="24"><nz-input-number formControlName="basePremiumEth" [nzMin]="0" [nzStep]="0.1" class="w-full"></nz-input-number></nz-form-control>
         </nz-form-item>
 
-        <nz-form-item>
-          <nz-form-label [nzSpan]="24">Delay Tier 1 Threshold (min)</nz-form-label>
-          <nz-form-control [nzSpan]="24"><nz-input-number formControlName="delayThresholdTier1Minutes" [nzMin]="1" class="w-full"></nz-input-number></nz-form-control>
-        </nz-form-item>
-
-        <nz-form-item>
-          <nz-form-label [nzSpan]="24">Delay Tier 1 Payout</nz-form-label>
-          <nz-form-control [nzSpan]="24"><nz-input-number formControlName="delayPayoutTier1Eth" [nzMin]="0" [nzStep]="0.1" class="w-full"></nz-input-number></nz-form-control>
-        </nz-form-item>
-
-        <nz-form-item>
-          <nz-form-label [nzSpan]="24">Delay Tier 2 Threshold (min)</nz-form-label>
-          <nz-form-control [nzSpan]="24"><nz-input-number formControlName="delayThresholdTier2Minutes" [nzMin]="1" class="w-full"></nz-input-number></nz-form-control>
-        </nz-form-item>
-
-        <nz-form-item>
-          <nz-form-label [nzSpan]="24">Delay Tier 2 Payout</nz-form-label>
-          <nz-form-control [nzSpan]="24"><nz-input-number formControlName="delayPayoutTier2Eth" [nzMin]="0" [nzStep]="0.1" class="w-full"></nz-input-number></nz-form-control>
-        </nz-form-item>
-
-        <nz-form-item>
-          <nz-form-label [nzSpan]="24">Delay Tier 3 Threshold (min)</nz-form-label>
-          <nz-form-control [nzSpan]="24"><nz-input-number formControlName="delayThresholdTier3Minutes" [nzMin]="1" class="w-full"></nz-input-number></nz-form-control>
-        </nz-form-item>
-
-        <nz-form-item>
-          <nz-form-label [nzSpan]="24">Delay Tier 3 Payout</nz-form-label>
-          <nz-form-control [nzSpan]="24"><nz-input-number formControlName="delayPayoutTier3Eth" [nzMin]="0" [nzStep]="0.1" class="w-full"></nz-input-number></nz-form-control>
-        </nz-form-item>
-
-        <nz-form-item>
-          <nz-form-label [nzSpan]="24">Cancellation Payout</nz-form-label>
-          <nz-form-control [nzSpan]="24"><nz-input-number formControlName="cancellationPayoutEth" [nzMin]="0" [nzStep]="0.1" class="w-full"></nz-input-number></nz-form-control>
-        </nz-form-item>
-
-        <nz-divider class="insurance-config-form-grid__span-2">Premium Formula Parameters</nz-divider>
+        <nz-divider class="insurance-config-form-grid__span-2">Premium Formula Inputs</nz-divider>
 
         <nz-form-item>
           <nz-form-label [nzSpan]="24">Base Rate</nz-form-label>

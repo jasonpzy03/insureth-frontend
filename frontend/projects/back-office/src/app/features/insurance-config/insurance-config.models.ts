@@ -1,13 +1,6 @@
 export interface FlightInsurancePricingConfigModel {
   productCode: string;
   basePremiumEth: number;
-  delayPayoutTier1Eth: number;
-  delayPayoutTier2Eth: number;
-  delayPayoutTier3Eth: number;
-  cancellationPayoutEth: number;
-  delayThresholdTier1Minutes: number;
-  delayThresholdTier2Minutes: number;
-  delayThresholdTier3Minutes: number;
   premiumBaseRate: number;
   premiumPerDayMultiplier: number;
   premiumDemandMultiplier: number;
@@ -43,6 +36,8 @@ export interface FlightInsuranceAdminAirportModel {
   name: string;
   iataCode: string;
   icaoCode: string;
+  timezone: string;
+  countryCode: string;
   supportedForFlightInsurance: boolean;
 }
 
@@ -57,5 +52,6 @@ export interface FlightInsuranceAirportUpdateRequest {
   name: string;
   iataCode: string;
   icaoCode: string;
+  timezone: string;
   supportedForFlightInsurance: boolean;
 }

@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { NzButtonModule } from 'ng-zorro-antd/button';
 import { NzCardModule } from 'ng-zorro-antd/card';
+import { NzMessageService } from 'ng-zorro-antd/message';
 import { NzInputModule } from 'ng-zorro-antd/input';
 import { NzTableModule } from 'ng-zorro-antd/table';
 import { FlightInsuranceAdminAirportModel } from '../insurance-config/insurance-config.models';
@@ -19,8 +20,10 @@ import { InsuranceConfigService } from '../insurance-config/insurance-config.ser
 export class InsuranceAirportsPage {
   private readonly service = inject(InsuranceConfigService);
   private readonly router = inject(Router);
+  private readonly message = inject(NzMessageService);
 
   readonly isLoading = signal(false);
+  readonly isSyncing = signal(false);
   readonly items = signal<FlightInsuranceAdminAirportModel[]>([]);
   readonly total = signal(0);
   readonly pageSizeOptions = [10, 20, 50, 100];
@@ -56,5 +59,30 @@ export class InsuranceAirportsPage {
 
   openAirport(airportId: number): void {
     void this.router.navigate(['/insurance-config/flight-insurance/airports', airportId]);
+  }
+
+  async syncAirports(): Promise<void> {
+    this.isSyncing.set(true);
+    try {
+      await this.service.syncAirports();
+      this.message.success('Airports synced successfully from Airlabs');
+      await this.load();
+    } catch (e) {
+      this.message.error('Failed to sync airports from Airlabs');
+    } finally {
+      this.isSyncing.set(false);
+    }
+  }
+
+  async syncTimezones(): Promise<void> {
+    this.isSyncing.set(true);
+    try {
+      await this.service.syncTimezones();
+      this.message.success('Timezone cache updated successfully');
+    } catch (e) {
+      this.message.error('Failed to update timezone cache');
+    } finally {
+      this.isSyncing.set(false);
+    }
   }
 }

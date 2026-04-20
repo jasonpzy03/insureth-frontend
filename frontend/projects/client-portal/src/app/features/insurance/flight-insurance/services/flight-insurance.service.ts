@@ -60,4 +60,5 @@ export class FlightInsuranceService {
 
     return this.http.get<FlightInsuranceQuoteResponse>(`${this.apiBaseUrl}/quote`, { params });
   }
+
 }

@@ -14,6 +14,7 @@ export type FlightInsuranceAdminSnapshot = {
   verificationBufferSeconds: number;
   minPurchaseLeadTimeSeconds: number;
   maxPurchaseLeadTimeSeconds: number;
+  postDeparturePurchaseGracePeriodSeconds: number;
   platformFeePercentage: number;
   platformFeeFlatAmountEth: number;
   platformFeeMode: number;
@@ -24,11 +25,55 @@ export type FlightInsuranceAdminSnapshot = {
   cancellationPayoutMultiplierBps: number;
 };
 
+export type BackofficePolicyRecord = {
+  policyId: number;
+  holder: string;
+  riskKey: string;
+  flightNumber: string;
+  origin: string;
+  destination: string;
+  departureTime: number;
+  purchaseTimestamp: number | null;
+  premiumWei: bigint;
+  payoutAmountWei: bigint;
+  active: boolean;
+  claimed: boolean;
+  resolved: boolean;
+  exists: boolean;
+  oracleRequested: boolean;
+  statusInt: number;
+  statusLabel: string;
+  delayMinutes: number;
+  policiesSharingRisk: number;
+};
+
 @Injectable({
   providedIn: 'root'
 })
 export class FlightInsuranceAdminService {
   private readonly walletService = inject(WalletService);
+
+  private getStatusLabel(statusInt: number): string {
+    switch (statusInt) {
+      case 1:
+        return 'On Time';
+      case 2:
+        return 'Delayed';
+      case 3:
+        return 'Cancelled';
+      default:
+        return 'Awaiting Verification';
+    }
+  }
+
+  private getReadContract(): Contract {
+    const provider = this.walletService.getProvider();
+    if (!provider) {
+      throw new Error('Wallet provider is not available');
+    }
+
+    return new Contract(FLIGHT_INSURANCE_CONTRACT_ADDRESS, FLIGHT_INSURANCE_ADMIN_ABI, provider);
+  }
 
   private extractErrorMessage(error: any): string | null {
     if (!error) {
@@ -93,12 +138,7 @@ export class FlightInsuranceAdminService {
   }
 
   async getSnapshot(): Promise<FlightInsuranceAdminSnapshot> {
-    const provider = this.walletService.getProvider();
-    if (!provider) {
-      throw new Error('Wallet provider is not available');
-    }
-
-    const contract = new Contract(FLIGHT_INSURANCE_CONTRACT_ADDRESS, FLIGHT_INSURANCE_ADMIN_ABI, provider);
+    const contract = this.getReadContract();
     const connectedWallet = this.walletService.address();
 
     const [
@@ -110,6 +150,7 @@ export class FlightInsuranceAdminService {
       verificationBuffer,
       minPurchaseLeadTime,
       maxPurchaseLeadTime,
+      postDeparturePurchaseGracePeriod,
       platformFeePercentage,
       platformFeeFlatAmount,
       platformFeeMode,
@@ -123,6 +164,7 @@ export class FlightInsuranceAdminService {
       contract['verificationBuffer'](),
       contract['minPurchaseLeadTime'](),
       contract['maxPurchaseLeadTime'](),
+      contract['postDeparturePurchaseGracePeriod'](),
       contract['platformFeePercentage'](),
       contract['platformFeeFlatAmount'](),
       contract['platformFeeMode'](),
@@ -148,6 +190,7 @@ export class FlightInsuranceAdminService {
       verificationBufferSeconds: Number(verificationBuffer),
       minPurchaseLeadTimeSeconds: Number(minPurchaseLeadTime),
       maxPurchaseLeadTimeSeconds: Number(maxPurchaseLeadTime),
+      postDeparturePurchaseGracePeriodSeconds: Number(postDeparturePurchaseGracePeriod),
       platformFeePercentage: Number(platformFeePercentage),
       platformFeeFlatAmountEth: Number(formatEther(platformFeeFlatAmount)),
       platformFeeMode: Number(platformFeeMode),
@@ -159,8 +202,129 @@ export class FlightInsuranceAdminService {
     };
   }
 
-  async setChainlinkConfig(sourceCode: string, subscriptionId: number, gasLimit: number) {
-    return this.sendTransaction('setChainlinkConfig', [sourceCode, BigInt(subscriptionId), gasLimit]);
+  async listPolicies(): Promise<BackofficePolicyRecord[]> {
+    const contract = this.getReadContract();
+    const provider = this.walletService.getProvider();
+    if (!provider) {
+      throw new Error('Wallet provider is not available');
+    }
+
+    const events = await contract.queryFilter(contract.filters['PolicyPurchased'](), 0, 'latest');
+    if (!events.length) {
+      return [];
+    }
+
+    const blockTimestampCache = new Map<number, Promise<number | null>>();
+    const riskCache = new Map<string, Promise<any>>();
+
+    const readBlockTimestamp = (blockNumber: number): Promise<number | null> => {
+      const existing = blockTimestampCache.get(blockNumber);
+      if (existing) {
+        return existing;
+      }
+
+      const pending = provider.getBlock(blockNumber)
+        .then(block => block ? Number(block.timestamp) : null);
+      blockTimestampCache.set(blockNumber, pending);
+      return pending;
+    };
+
+    const readRisk = (riskKey: string): Promise<any> => {
+      const existing = riskCache.get(riskKey);
+      if (existing) {
+        return existing;
+      }
+
+      const pending = contract['risks'](riskKey);
+      riskCache.set(riskKey, pending);
+      return pending;
+    };
+
+    const records = await Promise.all(events.map(async (event: any) => {
+      const args = event.args;
+      if (!args) {
+        return null;
+      }
+
+      const policyId = Number(args.policyId);
+      const riskKey = String(args.riskKey);
+
+      const [policy, risk, purchaseTimestamp] = await Promise.all([
+        contract['policies'](BigInt(policyId)),
+        readRisk(riskKey),
+        readBlockTimestamp(event.blockNumber)
+      ]);
+
+      const [
+        holder,
+        policyRiskKey,
+        premiumWei,
+        payoutAmountWei,
+        active,
+        claimed
+      ] = policy;
+
+      const [
+        flightNumber,
+        origin,
+        destination,
+        departureTime,
+        status,
+        delayMinutes,
+        oracleRequested,
+        resolved,
+        exists
+      ] = risk;
+
+      return {
+        policyId,
+        holder: String(holder),
+        riskKey: String(policyRiskKey || riskKey),
+        flightNumber: String(flightNumber),
+        origin: String(origin),
+        destination: String(destination),
+        departureTime: Number(departureTime),
+        purchaseTimestamp,
+        premiumWei: BigInt(premiumWei),
+        payoutAmountWei: BigInt(payoutAmountWei),
+        active: Boolean(active),
+        claimed: Boolean(claimed),
+        resolved: Boolean(resolved),
+        exists: Boolean(exists),
+        oracleRequested: Boolean(oracleRequested),
+        statusInt: Number(status),
+        statusLabel: this.getStatusLabel(Number(status)),
+        delayMinutes: Number(delayMinutes),
+        policiesSharingRisk: 0
+      } satisfies BackofficePolicyRecord;
+    }));
+
+    const filteredRecords = records
+      .filter((record): record is BackofficePolicyRecord => record !== null)
+      .sort((left, right) => right.policyId - left.policyId);
+
+    const riskCounts = filteredRecords.reduce((accumulator, record) => {
+      accumulator.set(record.riskKey, (accumulator.get(record.riskKey) ?? 0) + 1);
+      return accumulator;
+    }, new Map<string, number>());
+
+    return filteredRecords.map(record => ({
+      ...record,
+      policiesSharingRisk: riskCounts.get(record.riskKey) ?? 1
+    }));
+  }
+
+  async setChainlinkConfig(
+    sourceCode: string,
+    subscriptionId: number,
+    gasLimit: number,
+    onTransactionSubmitted?: (hash: string) => void | Promise<void>
+  ) {
+    return this.sendTransaction(
+      'setChainlinkConfig',
+      [sourceCode, BigInt(subscriptionId), gasLimit],
+      onTransactionSubmitted
+    );
   }
 
   async setVerificationBuffer(seconds: number) {
@@ -171,6 +335,7 @@ export class FlightInsuranceAdminService {
     verificationBufferSeconds: number;
     minPurchaseLeadTimeSeconds: number;
     maxPurchaseLeadTimeSeconds: number;
+    postDeparturePurchaseGracePeriodSeconds: number;
     platformFeeMode: number;
     platformFeePercentage: number;
     platformFeeFlatAmountEth: number;
@@ -179,11 +344,12 @@ export class FlightInsuranceAdminService {
     minDelayPayoutMultiplierBps: number;
     maxDelayPayoutMultiplierBps: number;
     cancellationPayoutMultiplierBps: number;
-  }) {
+  }, onTransactionSubmitted?: (hash: string) => void | Promise<void>) {
     return this.sendTransaction('setAdminControls', [
       BigInt(payload.verificationBufferSeconds),
       BigInt(payload.minPurchaseLeadTimeSeconds),
       BigInt(payload.maxPurchaseLeadTimeSeconds),
+      BigInt(payload.postDeparturePurchaseGracePeriodSeconds),
       payload.platformFeeMode,
       BigInt(payload.platformFeePercentage),
       parseEther(payload.platformFeeFlatAmountEth.toFixed(6)),
@@ -192,7 +358,7 @@ export class FlightInsuranceAdminService {
       BigInt(payload.minDelayPayoutMultiplierBps),
       BigInt(payload.maxDelayPayoutMultiplierBps),
       BigInt(payload.cancellationPayoutMultiplierBps)
-    ]);
+    ], onTransactionSubmitted);
   }
 
   async setPurchaseWindow(minLeadTimeSeconds: number, maxLeadTimeSeconds: number) {
@@ -231,26 +397,46 @@ export class FlightInsuranceAdminService {
     ]);
   }
 
-  async simulateFlightResult(riskKey: string, statusInt: number, delayMinutes: number) {
-    return this.sendTransaction('simulateFlightResult', [riskKey, statusInt, delayMinutes]);
+  async requestOracleVerification(
+    riskKey: string,
+    onTransactionSubmitted?: (hash: string) => void | Promise<void>
+  ) {
+    return this.sendTransaction(
+      'requestOracleVerification',
+      [riskKey],
+      onTransactionSubmitted
+    );
   }
 
-  async computeRiskKey(
-    flightNumber: string,
-    origin: string,
-    destination: string,
-    departureTime: number
-  ): Promise<string> {
-    const provider = this.walletService.getProvider();
-    if (!provider) {
-      throw new Error('Wallet provider is not available');
-    }
-
-    const contract = new Contract(FLIGHT_INSURANCE_CONTRACT_ADDRESS, FLIGHT_INSURANCE_ADMIN_ABI, provider);
-    return contract['getRiskKey'](flightNumber, origin, destination, BigInt(departureTime));
+  async resetOracleRequest(
+    riskKey: string,
+    onTransactionSubmitted?: (hash: string) => void | Promise<void>
+  ) {
+    return this.sendTransaction(
+      'resetOracleRequest',
+      [riskKey],
+      onTransactionSubmitted
+    );
   }
 
-  private async sendTransaction(method: string, args: unknown[]) {
+  async simulateFlightResult(
+    riskKey: string,
+    statusInt: number,
+    delayMinutes: number,
+    onTransactionSubmitted?: (hash: string) => void | Promise<void>
+  ) {
+    return this.sendTransaction(
+      'simulateFlightResult',
+      [riskKey, BigInt(statusInt), BigInt(delayMinutes)],
+      onTransactionSubmitted
+    );
+  }
+
+  private async sendTransaction(
+    method: string,
+    args: unknown[],
+    onTransactionSubmitted?: (hash: string) => void | Promise<void>
+  ) {
     const signer = await this.walletService.getSigner();
     if (!signer) {
       throw new Error('Wallet not connected or signer not available');
@@ -261,6 +447,7 @@ export class FlightInsuranceAdminService {
     try {
       await this.preflightTransaction(contract, method, args);
       const tx = await contract[method](...args);
+      await onTransactionSubmitted?.(tx.hash);
       return tx.wait();
     } catch (error: any) {
       console.error(`${method} failed:`, error);

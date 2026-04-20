@@ -1,0 +1,280 @@
+<div class="bo-policy-ops-shell">
+  <div class="bo-policy-ops-intro">
+    <div>
+      <p class="bo-policy-ops-subtitle">Review the latest synced flight insurance policies from your database, investigate stuck risks, and intervene safely when oracle workflows need a manual push.</p>
+      <h1>Policy Operations</h1>
+    </div>
+    <div class="bo-policy-ops-intro__actions">
+      <nz-tag [nzColor]="isOwner() ? 'green' : 'gold'">
+        {{ isOwner() ? 'Contract owner connected' : 'Owner wallet required for risk overrides' }}
+      </nz-tag>
+      <button nz-button nzType="default" (click)="refresh()" [nzLoading]="isLoading()">
+        Refresh Database View
+      </button>
+      <button nz-button nzType="primary" (click)="syncLatest()" [nzLoading]="isSyncing()">
+        Sync Latest From Chain
+      </button>
+    </div>
+  </div>
+
+  <nz-alert
+    *ngIf="pageError()"
+    nzType="error"
+    [nzMessage]="pageError()"
+    nzShowIcon>
+  </nz-alert>
+
+  <div class="bo-policy-ops-metrics">
+    <nz-card class="bo-policy-ops-metric">
+      <span class="bo-policy-ops-metric__eyebrow">Policies</span>
+      <strong>{{ totalPolicies() }}</strong>
+      <span>Current policy records stored in the back-office policy database.</span>
+    </nz-card>
+
+    <nz-card class="bo-policy-ops-metric">
+      <span class="bo-policy-ops-metric__eyebrow">Awaiting Oracle</span>
+      <strong>{{ pendingOracleCount() }}</strong>
+      <span>Risks where oracle has been requested and still has not resolved.</span>
+    </nz-card>
+
+    <nz-card class="bo-policy-ops-metric">
+      <span class="bo-policy-ops-metric__eyebrow">Needs Attention</span>
+      <strong>{{ unresolvedCount() }}</strong>
+      <span>Open risks that may need a retry or a manual outcome if the data source failed.</span>
+    </nz-card>
+
+    <nz-card class="bo-policy-ops-metric">
+      <span class="bo-policy-ops-metric__eyebrow">Claimed</span>
+      <strong>{{ claimedCount() }}</strong>
+      <span>Policies already settled and marked claimed on-chain.</span>
+    </nz-card>
+  </div>
+
+  <nz-card class="bo-policy-ops-card">
+    <div class="bo-policy-ops-toolbar">
+      <div class="bo-policy-ops-toolbar__search">
+        <span class="bo-policy-ops-toolbar__label">Search</span>
+        <input
+          nz-input
+          placeholder="Policy ID, flight, route, holder, or risk key"
+          [ngModel]="searchTerm()"
+          (ngModelChange)="searchTerm.set($event); onFiltersChanged()">
+      </div>
+
+      <div class="bo-policy-ops-toolbar__filters">
+        <div class="bo-policy-ops-toolbar__filter">
+          <span class="bo-policy-ops-toolbar__label">Outcome</span>
+          <nz-select
+            [ngModel]="statusFilter()"
+            (ngModelChange)="statusFilter.set($event); onFiltersChanged()">
+            <nz-option *ngFor="let option of statusOptions" [nzLabel]="option.label" [nzValue]="option.value"></nz-option>
+          </nz-select>
+        </div>
+
+        <div class="bo-policy-ops-toolbar__filter">
+          <span class="bo-policy-ops-toolbar__label">Oracle</span>
+          <nz-select
+            [ngModel]="oracleFilter()"
+            (ngModelChange)="oracleFilter.set($event); onFiltersChanged()">
+            <nz-option *ngFor="let option of oracleOptions" [nzLabel]="option.label" [nzValue]="option.value"></nz-option>
+          </nz-select>
+        </div>
+
+        <div class="bo-policy-ops-toolbar__filter">
+          <span class="bo-policy-ops-toolbar__label">Policy State</span>
+          <nz-select
+            [ngModel]="activityFilter()"
+            (ngModelChange)="activityFilter.set($event); onFiltersChanged()">
+            <nz-option *ngFor="let option of activityOptions" [nzLabel]="option.label" [nzValue]="option.value"></nz-option>
+          </nz-select>
+        </div>
+      </div>
+    </div>
+
+    <nz-table
+      [nzData]="pagedPolicies()"
+      [nzFrontPagination]="false"
+      [nzLoading]="isLoading()"
+      [nzShowPagination]="false"
+      class="bo-policy-ops-table">
+      <thead>
+        <tr>
+          <th>Policy</th>
+          <th>Flight</th>
+          <th>Holder</th>
+          <th>Premium</th>
+          <th>Outcome</th>
+          <th>Oracle</th>
+          <th>Risk Key</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let policy of pagedPolicies()">
+          <td>
+            <div class="bo-policy-ops-cell">
+              <strong>#{{ policy.policyId }}</strong>
+              <span>{{ activityLabel(policy) }}</span>
+              <small *ngIf="policy.purchaseTimestamp">
+                Bought {{ policy.purchaseTimestamp * 1000 | date:'dd MMM yyyy, HH:mm' }}
+              </small>
+            </div>
+          </td>
+
+          <td>
+            <div class="bo-policy-ops-cell">
+              <strong>{{ policy.flightNumber }}</strong>
+              <span>{{ policy.origin }} → {{ policy.destination }}</span>
+              <small>{{ policy.departureTime * 1000 | date:'dd MMM yyyy, HH:mm' }} UTC</small>
+            </div>
+          </td>
+
+          <td>
+            <div class="bo-policy-ops-cell">
+              <strong>{{ formatAddress(policy.holder) }}</strong>
+              <span class="bo-policy-ops-mono">{{ policy.holder }}</span>
+            </div>
+          </td>
+
+          <td>
+            <div class="bo-policy-ops-cell">
+              <strong>{{ formatEth(policy.premiumWei) }}</strong>
+              <span *ngIf="policy.claimed && hasPayout(policy)">Paid out {{ formatEth(policy.payoutAmountWei) }}</span>
+              <span *ngIf="!policy.claimed && hasPayout(policy)">Potential payout {{ formatEth(policy.payoutAmountWei) }}</span>
+              <span *ngIf="!hasPayout(policy)">No payout recorded yet</span>
+            </div>
+          </td>
+
+          <td>
+            <div class="bo-policy-ops-cell">
+              <nz-tag [nzColor]="policy.statusInt === 3 ? 'red' : (policy.statusInt === 2 ? 'orange' : (policy.statusInt === 1 ? 'green' : 'blue'))">
+                {{ policy.statusLabel }}
+              </nz-tag>
+              <span>{{ formatDelay(policy) }}</span>
+            </div>
+          </td>
+
+          <td>
+            <div class="bo-policy-ops-cell">
+              <nz-tag [nzColor]="policy.resolved ? 'green' : (policy.oracleRequested ? 'gold' : 'processing')">
+                {{ policy.resolved ? 'Resolved' : (policy.oracleRequested ? 'Pending request' : 'Ready to retry') }}
+              </nz-tag>
+              <span>{{ policy.policiesSharingRisk }} policy{{ policy.policiesSharingRisk > 1 ? 'ies' : '' }} on same risk</span>
+            </div>
+          </td>
+
+          <td>
+            <div class="bo-policy-ops-cell">
+              <span class="bo-policy-ops-mono bo-policy-ops-risk">{{ policy.riskKey }}</span>
+              <button nz-button nzType="link" class="!px-0" (click)="copyRiskKey(policy.riskKey)">
+                Copy
+              </button>
+            </div>
+          </td>
+
+          <td>
+            <div class="bo-policy-ops-actions">
+              <button
+                nz-button
+                nzType="default"
+                nz-dropdown
+                [nzDropdownMenu]="actionMenu"
+                nzTrigger="click">
+                Actions
+              </button>
+
+              <nz-dropdown-menu #actionMenu="nzDropdownMenu">
+                <ul nz-menu>
+                  <li
+                    nz-menu-item
+                    [nzDisabled]="!canRetryOracle(policy) || actionKey() === 'retry-' + policy.policyId"
+                    (click)="retryOracleRequest(policy)">
+                    Retry Oracle Ask
+                  </li>
+                  <li
+                    nz-menu-item
+                    [nzDisabled]="!canResetOracle(policy) || actionKey() === 'reset-' + policy.policyId"
+                    (click)="resetOracleRequest(policy)">
+                    Reset Oracle Requested
+                  </li>
+                  <li
+                    nz-menu-item
+                    [nzDisabled]="!canManualResolve(policy) || actionKey() === 'manual-' + policy.policyId"
+                    (click)="openManualResolveModal(policy)">
+                    Manual Resolve Risk
+                  </li>
+                </ul>
+              </nz-dropdown-menu>
+            </div>
+          </td>
+        </tr>
+
+        <tr *ngIf="!pagedPolicies().length && !isLoading()">
+          <td colspan="8" class="bo-policy-ops-empty">
+            No policies match the current filters.
+          </td>
+        </tr>
+      </tbody>
+    </nz-table>
+
+    <div class="bo-policy-ops-pagination" *ngIf="filteredPolicies().length">
+      <span>Showing {{ pagedPolicies().length }} of {{ filteredPolicies().length }} filtered policies</span>
+      <nz-pagination
+        [nzTotal]="filteredPolicies().length"
+        [nzPageIndex]="pageIndex()"
+        [nzPageSize]="pageSize()"
+        [nzPageSizeOptions]="[10, 20, 50]"
+        [nzShowSizeChanger]="true"
+        [nzShowQuickJumper]="true"
+        (nzPageIndexChange)="onPageIndexChange($event)"
+        (nzPageSizeChange)="onPageSizeChange($event)">
+      </nz-pagination>
+    </div>
+  </nz-card>
+
+  <nz-modal
+    [nzVisible]="isManualResolveModalOpen()"
+    nzTitle="Manual Risk Resolution"
+    [nzOkText]="'Resolve Risk'"
+    [nzCancelText]="'Cancel'"
+    [nzOkLoading]="selectedPolicyForManualResolve() ? actionKey() === 'manual-' + selectedPolicyForManualResolve()!.policyId : false"
+    (nzOnCancel)="closeManualResolveModal()"
+    (nzOnOk)="confirmManualResolve()">
+    <ng-container *nzModalContent>
+      <div class="bo-policy-ops-modal-form" *ngIf="selectedPolicyForManualResolve() as policy">
+        <p class="bo-policy-ops-modal-copy">
+          This owner-only override resolves the whole risk, so all {{ policy.policiesSharingRisk }} linked policy{{ policy.policiesSharingRisk > 1 ? 'ies' : '' }}
+          sharing risk key <span class="bo-policy-ops-mono">{{ policy.riskKey }}</span> will be updated together.
+        </p>
+
+        <div class="bo-policy-ops-modal-grid">
+          <div class="bo-policy-ops-modal-field">
+            <label>Outcome</label>
+            <nz-select
+              [ngModel]="manualResolveStatus()"
+              (ngModelChange)="manualResolveStatus.set($event)">
+              <nz-option [nzValue]="1" nzLabel="On Time"></nz-option>
+              <nz-option [nzValue]="2" nzLabel="Delayed"></nz-option>
+              <nz-option [nzValue]="3" nzLabel="Cancelled"></nz-option>
+            </nz-select>
+          </div>
+
+          <div class="bo-policy-ops-modal-field" *ngIf="manualResolveStatus() === 2">
+            <label>Delay Minutes</label>
+            <nz-input-number
+              class="w-full"
+              [nzMin]="1"
+              [nzStep]="1"
+              [ngModel]="manualResolveDelayMinutes()"
+              (ngModelChange)="manualResolveDelayMinutes.set($event ?? 1)">
+            </nz-input-number>
+          </div>
+        </div>
+
+        <div class="bo-policy-ops-modal-note">
+          This uses the contract's risk-level manual resolution path and will immediately mark the risk as resolved on-chain.
+        </div>
+      </div>
+    </ng-container>
+  </nz-modal>
+</div>

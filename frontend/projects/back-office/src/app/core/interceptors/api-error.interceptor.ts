@@ -1,15 +1,31 @@
 import { HttpContextToken, HttpErrorResponse, HttpInterceptorFn } from '@angular/common/http';
 import { inject } from '@angular/core';
 import { NzMessageService } from 'ng-zorro-antd/message';
-import { catchError, throwError } from 'rxjs';
+import { catchError, throwError, EMPTY } from 'rxjs';
+import { BackofficeAuthService } from '../services/backoffice-auth.service';
 
 export const SKIP_GLOBAL_API_ERROR = new HttpContextToken<boolean>(() => false);
+let isRedirecting = false;
 
 export const apiErrorInterceptor: HttpInterceptorFn = (req, next) => {
   const message = inject(NzMessageService);
+  const authService = inject(BackofficeAuthService);
 
   return next(req).pipe(
     catchError((error: unknown) => {
+      const err = error as any;
+      const status = error instanceof HttpErrorResponse ? error.status : err.status;
+
+      // Session expiration (401/403)
+      if (status === 401 || status === 403) {
+        if (!isRedirecting) {
+          isRedirecting = true;
+          authService.logout();
+          window.location.href = '/login?expired=true';
+        }
+        return EMPTY;
+      }
+
       if (req.context.get(SKIP_GLOBAL_API_ERROR)) {
         return throwError(() => error);
       }

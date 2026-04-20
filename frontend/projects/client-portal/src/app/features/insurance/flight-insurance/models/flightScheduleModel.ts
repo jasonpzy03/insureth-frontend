@@ -6,4 +6,8 @@ export interface FlightScheduleResponseModel {
     arrivalAirportName: string;
     departureTime: string;
     arrivalTime: string;
+    departureLocalTime: string;
+    arrivalLocalTime: string;
+    departureTimezone: string;
+    arrivalTimezone: string;
 }

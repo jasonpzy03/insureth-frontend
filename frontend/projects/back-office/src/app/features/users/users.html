@@ -43,10 +43,10 @@
         </nz-form-item>
 
         <nz-form-item>
-          <nz-form-label [nzSpan]="24" nzFor="role">Role</nz-form-label>
+          <nz-form-label [nzSpan]="24" nzFor="roles">Roles</nz-form-label>
           <nz-form-control [nzSpan]="24">
-            <nz-select id="role" formControlName="role">
-              <nz-option *ngFor="let role of roleOptions" [nzLabel]="role" [nzValue]="role"></nz-option>
+            <nz-select id="roles" formControlName="roles" nzMode="multiple" nzPlaceHolder="Select one or more roles">
+              <nz-option *ngFor="let role of availableRoles()" [nzLabel]="role.name" [nzValue]="role.name"></nz-option>
             </nz-select>
           </nz-form-control>
         </nz-form-item>
@@ -80,7 +80,7 @@
             <th>Username</th>
             <th>Email</th>
             <th>Wallet</th>
-            <th>Role</th>
+            <th>Roles</th>
           </tr>
         </thead>
         <tbody>
@@ -88,7 +88,7 @@
             <td>{{ user.username }}</td>
             <td>{{ user.email }}</td>
             <td class="bo-users-wallet">{{ user.walletAddress }}</td>
-            <td>{{ user.role }}</td>
+            <td>{{ formatRoles(user) }}</td>
           </tr>
           <tr *ngIf="!users().length && !isLoading()">
             <td colspan="4" class="bo-users-empty">No backoffice users found.</td>

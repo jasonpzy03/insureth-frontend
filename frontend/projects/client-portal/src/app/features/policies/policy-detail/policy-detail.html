@@ -5,7 +5,17 @@
     </a>
   </div>
 
-  <nz-skeleton [nzLoading]="isLoading" [nzActive]="true" [nzParagraph]="{ rows: 8 }"></nz-skeleton>
+  <div *ngIf="isLoading" class="grid grid-cols-1 gap-6">
+    <nz-card class="shadow-sm border border-gray-100 rounded-2xl">
+      <nz-skeleton [nzLoading]="true" [nzActive]="true" [nzParagraph]="{ rows: 2 }"></nz-skeleton>
+    </nz-card>
+    <nz-card class="shadow-sm border border-gray-100 rounded-2xl">
+      <nz-skeleton [nzLoading]="true" [nzActive]="true" [nzParagraph]="{ rows: 7 }"></nz-skeleton>
+    </nz-card>
+    <nz-card class="shadow-sm border border-gray-100 rounded-2xl">
+      <nz-skeleton [nzLoading]="true" [nzActive]="true" [nzParagraph]="{ rows: 6 }"></nz-skeleton>
+    </nz-card>
+  </div>
 
   <nz-card *ngIf="error" nzTitle="Error" class="border-red-200">
     <p class="text-red-500">{{error}}</p>
@@ -18,9 +28,91 @@
         <h2 class="text-3xl font-black text-[#8732fb] mb-1">Flight {{policyDetails.policy.flightNumber}}</h2>
         <p class="text-gray-500 font-medium">Policy ID: #{{policyDetails.policy.policyId}}</p>
       </div>
-      <nz-tag [nzColor]="getStatusColor(policyDetails.policy.status)" class="rounded-full border-0 px-4 py-1 text-sm font-semibold">
-        {{getStatusText(policyDetails.policy.status)}}
+      <nz-tag [nzColor]="getDisplayStatusColor(policyDetails.policy)" class="rounded-full border-0 px-4 py-1 text-sm font-semibold">
+        {{getDisplayStatusText(policyDetails.policy)}}
       </nz-tag>
+    </div>
+
+    <div class="bg-white rounded-2xl shadow-sm p-8 mb-6 border border-gray-100">
+      <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-6 mb-6">
+        <div>
+          <p class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Verification Tracker</p>
+          <h3 class="text-2xl font-black text-gray-800 m-0">{{getVerificationHeadline(policyDetails.policy)}}</h3>
+          <p class="text-sm text-gray-500 mt-3 mb-0 max-w-3xl">{{getVerificationBody(policyDetails.policy)}}</p>
+        </div>
+        <div
+          class="rounded-2xl px-5 py-4 min-w-[15rem]"
+          [class.bg-gray-50]="!isOracleVerificationStuck(policyDetails.policy)"
+          [class.border-gray-200]="!isOracleVerificationStuck(policyDetails.policy)"
+          [class.border]="true"
+          [class.bg-amber-50]="isOracleVerificationStuck(policyDetails.policy)"
+          [class.border-amber-200]="isOracleVerificationStuck(policyDetails.policy)">
+          <span
+            class="text-xs font-bold uppercase tracking-widest block mb-2"
+            [class.text-gray-400]="!isOracleVerificationStuck(policyDetails.policy)"
+            [class.text-amber-700]="isOracleVerificationStuck(policyDetails.policy)">
+            {{isOracleVerificationStuck(policyDetails.policy) ? 'Verification Follow-Up' : 'Expected Oracle Time'}}
+          </span>
+          <span
+            class="text-lg font-black block"
+            [class.text-[#8732fb]]="!isOracleVerificationStuck(policyDetails.policy)"
+            [class.text-amber-900]="isOracleVerificationStuck(policyDetails.policy)">
+            {{formatOracleExpectedTime(policyDetails.policy)}}
+          </span>
+          <span
+            class="text-xs font-semibold mt-2 block"
+            [class.text-gray-500]="!isOracleVerificationStuck(policyDetails.policy)"
+            [class.text-amber-800]="isOracleVerificationStuck(policyDetails.policy)">
+            {{getCountdownLabel(policyDetails.policy)}}
+          </span>
+        </div>
+      </div>
+
+      <div class="w-full h-3 bg-gray-100 rounded-full overflow-hidden mb-6">
+        <div
+          class="h-full rounded-full transition-all duration-500"
+          [class.bg-gradient-to-r]="!isOracleVerificationStuck(policyDetails.policy)"
+          [class.from-[#8732fb]]="!isOracleVerificationStuck(policyDetails.policy)"
+          [class.via-[#6f5ef9]]="!isOracleVerificationStuck(policyDetails.policy)"
+          [class.to-[#40c4ff]]="!isOracleVerificationStuck(policyDetails.policy)"
+          [class.bg-gradient-to-r]="isOracleVerificationStuck(policyDetails.policy)"
+          [class.from-amber-400]="isOracleVerificationStuck(policyDetails.policy)"
+          [class.via-amber-500]="isOracleVerificationStuck(policyDetails.policy)"
+          [class.to-orange-500]="isOracleVerificationStuck(policyDetails.policy)"
+          [style.width.%]="getVerificationProgress(policyDetails.policy)">
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+        <div class="rounded-2xl bg-gray-50 border border-gray-200 p-4">
+          <span class="text-xs font-bold text-gray-400 uppercase tracking-widest block mb-2">Departure</span>
+          <span class="text-base font-black text-gray-800">{{formatDepartureTime(policyDetails.policy)}}</span>
+          <span class="text-xs font-semibold text-gray-400 mt-2 block">{{getDepartureTimezone(policyDetails.policy)}}</span>
+        </div>
+        <div class="rounded-2xl bg-gray-50 border border-gray-200 p-4">
+          <span class="text-xs font-bold text-gray-400 uppercase tracking-widest block mb-2">Verification Buffer</span>
+          <span class="text-base font-black text-gray-800">{{policyDetails.policy.verificationBufferSeconds / 60 | number:'1.0-0'}} min</span>
+        </div>
+        <div class="rounded-2xl bg-gray-50 border border-gray-200 p-4">
+          <span class="text-xs font-bold text-gray-400 uppercase tracking-widest block mb-2">Verified Delay</span>
+          <span class="text-base font-black text-amber-600">{{getDelayDisplay(policyDetails.policy) || 'Not recorded yet'}}</span>
+        </div>
+        <div class="rounded-2xl bg-gray-50 border border-gray-200 p-4">
+          <span class="text-xs font-bold text-gray-400 uppercase tracking-widest block mb-2">Payout Decision</span>
+          <span class="text-base font-black text-gray-800">{{getPayoutExplanation(policyDetails.policy)}}</span>
+        </div>
+      </div>
+
+      <div class="rounded-2xl bg-violet-50 border border-violet-100 p-5 mt-4">
+        <span class="text-xs font-bold text-violet-600 uppercase tracking-widest block mb-2">Your Purchased Payout Tier</span>
+        <div class="flex flex-col gap-3">
+          <div *ngFor="let tier of getPayoutTierRows()" class="flex items-center justify-between gap-4 text-sm">
+            <span class="font-semibold text-violet-700">{{tier.label}}</span>
+            <span class="font-black text-violet-900">{{tier.value}}</span>
+          </div>
+        </div>
+        <div class="text-sm font-medium text-violet-700 mt-3">{{getPayoutTierMeta()}}</div>
+      </div>
     </div>
 
     <!-- Timeline Transparent Tracker -->
@@ -40,9 +132,24 @@
             <div class="bg-gray-50 p-4 rounded-lg border border-gray-200 flex flex-col gap-2">
               <div class="flex justify-between">
                 <span class="text-gray-500 font-semibold text-xs uppercase tracking-wider">Amount</span>
-                <span [class.text-red-500]="tx.type === 'PURCHASE'" [class.text-emerald-500]="tx.type === 'PAYOUT'" class="font-bold">
-                  {{tx.type === 'PURCHASE' ? '-' : '+'}}{{tx.amount}} ETH
+                <span
+                  [class.text-red-500]="tx.type === 'PURCHASE'"
+                  [class.text-emerald-500]="tx.type === 'PAYOUT'"
+                  class="font-bold inline-flex items-center gap-1"
+                >
+                  {{tx.type === 'PURCHASE' ? '-' : '+'}}{{tx.amount | ethAmount}} ETH
                 </span>
+              </div>
+              <div *ngIf="formatApproxUsd(tx.amount)" class="flex justify-end text-xs text-gray-400">
+                <span>{{formatApproxUsd(tx.amount)}}</span>
+              </div>
+              <div *ngIf="tx.type === 'PURCHASE'" class="flex justify-between text-xs text-gray-500">
+                <span>Coverage premium credited to pool</span>
+                <span>{{tx.netAmount | ethAmount}} ETH <span *ngIf="formatApproxUsd(tx.netAmount)" class="text-gray-400 ml-1">{{formatApproxUsd(tx.netAmount)}}</span></span>
+              </div>
+              <div *ngIf="tx.type === 'PURCHASE'" class="flex justify-between text-xs text-gray-500">
+                <span>Platform fee included</span>
+                <span>{{tx.feeAmount | ethAmount}} ETH <span *ngIf="formatApproxUsd(tx.feeAmount)" class="text-gray-400 ml-1">{{formatApproxUsd(tx.feeAmount)}}</span></span>
               </div>
               <div class="flex justify-between items-center mt-2 border-t border-gray-200 pt-2">
                 <span class="text-gray-500 font-semibold text-xs uppercase tracking-wider">TX Hash</span>

@@ -9,6 +9,8 @@ import { NzSkeletonModule } from 'ng-zorro-antd/skeleton';
 import { NzIconModule } from 'ng-zorro-antd/icon';
 import { WalletService } from '../../../core/services/wallet.service';
 import { FlightInsuranceContractService } from '../../insurance/flight-insurance/services/flight-insurance-contract.service';
+import { EthPriceService } from '../../../core/services/eth-price.service';
+import { EthAmountPipe } from '../../../core/pipes/eth-amount.pipe';
 
 type InvestorTransaction = {
   type: 'DEPOSIT' | 'WITHDRAWAL' | 'DONATION';
@@ -31,7 +33,8 @@ type InvestorTransaction = {
     NzTagModule,
     NzButtonModule,
     NzSkeletonModule,
-    NzIconModule
+    NzIconModule,
+    EthAmountPipe
   ],
   templateUrl: './transactions.component.html',
   styleUrl: './transactions.component.scss'
@@ -39,6 +42,7 @@ type InvestorTransaction = {
 export class InvestorTransactionsComponent implements OnInit {
   private walletService = inject(WalletService);
   private contractService = inject(FlightInsuranceContractService);
+  private ethPriceService = inject(EthPriceService);
 
   isLoading = true;
   transactions: InvestorTransaction[] = [];
@@ -46,6 +50,7 @@ export class InvestorTransactionsComponent implements OnInit {
 
   async ngOnInit() {
     await this.walletService.initialized;
+    void this.ethPriceService.ensureLoaded();
     if (!this.walletService.isAuthenticated()) {
       return;
     }
@@ -105,5 +110,9 @@ export class InvestorTransactionsComponent implements OnInit {
 
   getExplorerUrl(hash: string): string | null {
     return this.explorerBaseUrl ? `${this.explorerBaseUrl}${hash}` : null;
+  }
+
+  formatApproxUsd(amount: number | string): string {
+    return this.ethPriceService.formatApproxUsd(amount);
   }
 }

@@ -4,11 +4,13 @@ import { LoginPage } from './features/auth/pages/login/login';
 import { SignupPage } from './features/auth/pages/signup/signup';
 import { FlightInsuranceLandingPage } from './features/insurance/flight-insurance/pages/flight-insurance-landing/flight-insurance-landing';
 import { PurchasePage } from './features/insurance/flight-insurance/pages/purchase/purchase';
+import { VerifyEmailPage } from './features/auth/pages/verify-email/verify-email';
 
 export const routes: Routes = [
   { path: '', pathMatch: 'full', redirectTo: '/dashboard' },
   { path: 'login', component: LoginPage, data: { breadcrumb: 'Login', hideBreadcrumb: true } },
   { path: 'signup', component: SignupPage, data: { breadcrumb: 'Sign Up', hideBreadcrumb: true } },
+  { path: 'auth/verify', component: VerifyEmailPage, data: { breadcrumb: 'Verify Email', hideBreadcrumb: true } },
   {
     path: '',
     canActivate: [authGuard],

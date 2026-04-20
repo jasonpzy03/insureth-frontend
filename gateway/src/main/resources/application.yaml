@@ -16,5 +16,9 @@ spring:
               predicates:
                 - Path=/api/v1/insurance/**
 
+security:
+  jwt:
+    secret: ${JWT_SECRET:VGhpcy1pcy1hLWRldi1vbmx5LWluc3VyZXRoLWJhY2tvZmZpY2Utand0LXNlY3JldC1rZXktMDE=}
+
 server:
   port: 8080

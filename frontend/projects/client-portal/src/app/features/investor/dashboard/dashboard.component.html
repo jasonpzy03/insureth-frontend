@@ -13,7 +13,16 @@
     </div>
   </div>
 
-  <nz-skeleton [nzLoading]="isLoading" [nzActive]="true" [nzParagraph]="{ rows: 8 }"></nz-skeleton>
+  <div *ngIf="isLoading" class="grid grid-cols-1 gap-6">
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <nz-card *ngFor="let _ of [1,2,3]" class="shadow-sm border-0 rounded-2xl overflow-hidden bg-white">
+        <nz-skeleton [nzLoading]="true" [nzActive]="true" [nzParagraph]="{ rows: 2 }"></nz-skeleton>
+      </nz-card>
+    </div>
+    <nz-card class="shadow-sm border-0 rounded-2xl overflow-hidden bg-white">
+      <nz-skeleton [nzLoading]="true" [nzActive]="true" [nzParagraph]="{ rows: 7 }"></nz-skeleton>
+    </nz-card>
+  </div>
 
   <div *ngIf="!isLoading">
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
@@ -21,9 +30,10 @@
         <div class="flex flex-col">
           <span class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Capital Invested</span>
           <div class="flex items-end gap-2">
-            <span class="text-4xl font-black text-gray-800">{{netCapitalInvested | number:'1.2-6'}}</span>
+            <span class="text-4xl font-black text-gray-800">{{netCapitalInvested | ethAmount}}</span>
             <span class="text-xl font-bold text-gray-400 mb-1">ETH</span>
           </div>
+          <span *ngIf="formatApproxUsd(netCapitalInvested)" class="text-xs font-bold text-gray-400 mt-1">{{formatApproxUsd(netCapitalInvested)}}</span>
           <span class="text-xs font-bold text-gray-400 bg-gray-50 px-2 py-1 rounded inline-flex w-max mt-3">Net deposits less withdrawals</span>
         </div>
       </nz-card>
@@ -32,9 +42,10 @@
         <div class="flex flex-col">
           <span class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Portfolio Value</span>
           <div class="flex items-end gap-2">
-            <span class="text-4xl font-black text-gray-800">{{investorValue | number:'1.2-6'}}</span>
+            <span class="text-4xl font-black text-gray-800">{{investorValue | ethAmount}}</span>
             <span class="text-xl font-bold text-gray-400 mb-1">ETH</span>
           </div>
+          <span *ngIf="formatApproxUsd(investorValue)" class="text-xs font-bold text-gray-400 mt-1">{{formatApproxUsd(investorValue)}}</span>
           <span class="text-xs font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded inline-flex w-max mt-3 items-center gap-1">
             <span nz-icon nzType="wallet"></span> Mark-to-pool value
           </span>
@@ -46,10 +57,11 @@
           <span class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Open PnL</span>
           <div class="flex items-end gap-2">
             <span class="text-4xl font-black" [class]="getPnlTone(openPnl)">
-              {{openPnl > 0 ? '+' : ''}}{{openPnl | number:'1.2-6'}}
+              {{openPnl > 0 ? '+' : ''}}{{openPnl | ethAmount}}
             </span>
             <span class="text-xl font-bold text-gray-400 mb-1">ETH</span>
           </div>
+          <span *ngIf="formatApproxUsd(openPnl)" class="text-xs font-bold text-gray-400 mt-1">{{formatApproxUsd(openPnl)}}</span>
           <span class="text-xs font-bold px-2 py-1 rounded inline-flex w-max mt-3"
             [class]="openPnl > 0 ? 'text-emerald-600 bg-emerald-50' : openPnl < 0 ? 'text-red-600 bg-red-50' : 'text-gray-400 bg-gray-50'">
             {{openPnlPct > 0 ? '+' : ''}}{{openPnlPct | number:'1.2-2'}}%
@@ -74,7 +86,7 @@
           <tr class="bg-gray-50 border-none">
             <th class="font-bold text-gray-500 uppercase tracking-wider text-xs">Pool</th>
             <th class="font-bold text-gray-500 uppercase tracking-wider text-xs">Shares Bought</th>
-            <th class="font-bold text-gray-500 uppercase tracking-wider text-xs">Bought Share Value</th>
+              <th class="font-bold text-gray-500 uppercase tracking-wider text-xs">Average Entry Price</th>
             <th class="font-bold text-gray-500 uppercase tracking-wider text-xs">Current Share Value</th>
             <th class="font-bold text-gray-500 uppercase tracking-wider text-xs">Capital Invested</th>
             <th class="font-bold text-gray-500 uppercase tracking-wider text-xs">Position Value</th>
@@ -95,21 +107,41 @@
               <span class="font-black text-gray-800">{{position.shares | number:'1.2-6'}} LP</span>
             </td>
             <td class="py-4">
-              <span class="font-black text-gray-800">{{position.boughtShareValue | number:'1.2-6'}} ETH</span>
+              <div class="flex flex-col">
+                <span *ngIf="hasMeaningfulAverageEntryPrice(position.averageEntryPrice); else averageEntryUnavailable" class="font-black text-gray-800">
+                  {{position.averageEntryPrice | ethAmount}} ETH
+                </span>
+                <span *ngIf="hasMeaningfulAverageEntryPrice(position.averageEntryPrice) && formatApproxUsd(position.averageEntryPrice!)" class="text-xs font-semibold text-gray-400">
+                  {{formatApproxUsd(position.averageEntryPrice!)}}
+                </span>
+                <ng-template #averageEntryUnavailable>
+                  <span class="font-black text-gray-400">—</span>
+                  <span class="text-xs font-semibold text-gray-400">Unavailable for dust balance</span>
+                </ng-template>
+              </div>
             </td>
             <td class="py-4">
-              <span class="font-black text-sky-700">{{position.currentShareValue | number:'1.2-6'}} ETH</span>
+              <div class="flex flex-col">
+                <span class="font-black text-sky-700">{{position.currentShareValue | ethAmount}} ETH</span>
+                <span *ngIf="formatApproxUsd(position.currentShareValue)" class="text-xs font-semibold text-gray-400">{{formatApproxUsd(position.currentShareValue)}}</span>
+              </div>
             </td>
             <td class="py-4">
-              <span class="font-black text-gray-800">{{position.capitalInvested | number:'1.2-6'}} ETH</span>
+              <div class="flex flex-col">
+                <span class="font-black text-gray-800">{{position.capitalInvested | ethAmount}} ETH</span>
+                <span *ngIf="formatApproxUsd(position.capitalInvested)" class="text-xs font-semibold text-gray-400">{{formatApproxUsd(position.capitalInvested)}}</span>
+              </div>
             </td>
             <td class="py-4">
-              <span class="font-black text-sky-700">{{position.positionValue | number:'1.2-6'}} ETH</span>
+              <div class="flex flex-col">
+                <span class="font-black text-sky-700">{{position.positionValue | ethAmount}} ETH</span>
+                <span *ngIf="formatApproxUsd(position.positionValue)" class="text-xs font-semibold text-gray-400">{{formatApproxUsd(position.positionValue)}}</span>
+              </div>
             </td>
             <td class="py-4">
               <div class="flex flex-col">
                 <span class="font-black" [class]="getPnlTone(position.openPnl)">
-                  {{position.openPnl > 0 ? '+' : ''}}{{position.openPnl | number:'1.2-6'}} ETH
+                  {{position.openPnl > 0 ? '+' : ''}}{{position.openPnl | ethAmount}} ETH
                 </span>
                 <span class="text-xs font-bold" [class]="getPnlTone(position.openPnl)">
                   {{position.openPnlPct > 0 ? '+' : ''}}{{position.openPnlPct | number:'1.2-2'}}%
@@ -121,7 +153,8 @@
             </td>
             <td class="py-4">
               <div class="flex items-center gap-3">
-                <span class="font-black text-[#8732fb]">{{position.withdrawableNow | number:'1.2-6'}} ETH</span>
+                <span class="font-black text-[#8732fb]">{{position.withdrawableNow | ethAmount}} ETH</span>
+                <span *ngIf="formatApproxUsd(position.withdrawableNow)" class="text-xs font-semibold text-gray-400">{{formatApproxUsd(position.withdrawableNow)}}</span>
                 <button
                   nz-button
                   nzType="default"
@@ -162,20 +195,28 @@
     <div class="p-4">
       <p class="text-gray-500 mb-2">Enter the amount of pool assets you want to redeem from your liquidity positions.</p>
       <div class="flex flex-col gap-1 mb-6">
-        <p class="text-sm text-gray-400">Capital invested: <strong class="text-gray-800">{{netCapitalInvested | number:'1.2-6'}} ETH</strong></p>
-        <p class="text-sm text-gray-400">Current portfolio value: <strong class="text-gray-800">{{investorValue | number:'1.2-6'}} ETH</strong></p>
-        <p class="text-sm text-gray-400">Max withdrawable now: <strong class="text-emerald-600">{{maxWithdrawable | number:'1.2-6'}} ETH</strong></p>
+        <p class="text-sm text-gray-400">Capital invested: <strong class="text-gray-800">{{netCapitalInvested | ethAmount}} ETH</strong> <span *ngIf="formatApproxUsd(netCapitalInvested)">{{formatApproxUsd(netCapitalInvested)}}</span></p>
+        <p class="text-sm text-gray-400">Current portfolio value: <strong class="text-gray-800">{{investorValue | ethAmount}} ETH</strong> <span *ngIf="formatApproxUsd(investorValue)">{{formatApproxUsd(investorValue)}}</span></p>
+        <p class="text-sm text-gray-400">Max withdrawable now: <strong class="text-emerald-600">{{maxWithdrawable | ethAmount}} ETH</strong> <span *ngIf="formatApproxUsd(maxWithdrawable)">{{formatApproxUsd(maxWithdrawable)}}</span></p>
       </div>
 
       <div class="mb-6 flex flex-col">
-        <label class="text-sm font-bold text-gray-700 mb-2">Withdrawal Amount (ETH)</label>
+        <div class="flex items-center justify-between gap-3 mb-2">
+          <label class="text-sm font-bold text-gray-700">Withdrawal Amount (ETH)</label>
+          <button nz-button nzType="link" class="!px-0" (click)="useMaximumWithdraw()">
+            Use Exact Max
+          </button>
+        </div>
         <nz-input-number
-          [(ngModel)]="withdrawAmount"
+          [ngModel]="withdrawAmount"
+          (ngModelChange)="setWithdrawAmount($event)"
           [nzMin]="0.0001"
           [nzMax]="maxWithdrawable"
           [nzStep]="0.1"
           class="withdraw-amount-input">
         </nz-input-number>
+        <div *ngIf="withdrawAmount && formatApproxUsd(withdrawAmount)" class="text-xs font-semibold text-gray-400 mt-2">{{formatApproxUsd(withdrawAmount)}}</div>
+        <div *ngIf="useMaxWithdraw" class="text-xs font-semibold text-emerald-600 mt-2">Using exact on-chain max withdraw amount.</div>
       </div>
 
       <div class="bg-blue-50 border border-blue-200 p-4 rounded-xl flex gap-3 mb-6 items-start">
