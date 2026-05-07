@@ -1,0 +1,75 @@
+<div class="p-6 md:p-10 max-w-6xl mx-auto">
+  <div class="flex flex-col md:flex-row md:items-end md:justify-between gap-4 mb-8">
+    <div>
+      <h2 class="text-3xl font-black text-gray-800">Investor Activity</h2>
+      <p class="text-gray-500 font-medium mt-1">View your on-chain liquidity deposits, withdrawals, and related pool transactions.</p>
+    </div>
+    <div class="flex gap-3">
+      <button nz-button nzType="default" routerLink="/investor/dashboard" class="rounded-lg h-10 font-bold">
+        <span nz-icon nzType="arrow-left"></span> Back to Dashboard
+      </button>
+      <button nz-button nzType="primary" (click)="loadTransactions()" class="rounded-lg h-10 font-bold bg-[#8732fb] border-[#8732fb] hover:bg-[#7220e3] hover:border-[#7220e3]">
+        <span nz-icon nzType="reload"></span> Refresh
+      </button>
+    </div>
+  </div>
+
+  <nz-card *ngIf="isLoading" class="shadow-sm border-0 rounded-2xl overflow-hidden bg-white">
+    <nz-skeleton [nzLoading]="true" [nzActive]="true" [nzParagraph]="{ rows: 6 }"></nz-skeleton>
+  </nz-card>
+
+  <nz-card *ngIf="!isLoading" nzTitle="Transaction History" class="shadow-sm border-0 rounded-2xl overflow-hidden" [nzBodyStyle]="{padding: '0'}">
+    <nz-table [nzData]="transactions" [nzShowPagination]="transactions.length > 10" [nzPageSize]="10">
+      <thead>
+        <tr class="bg-gray-50 border-none">
+          <th class="font-bold text-gray-500 uppercase tracking-wider text-xs">Type</th>
+          <th class="font-bold text-gray-500 uppercase tracking-wider text-xs">Amount</th>
+          <th class="font-bold text-gray-500 uppercase tracking-wider text-xs">Shares</th>
+          <th class="font-bold text-gray-500 uppercase tracking-wider text-xs">When</th>
+          <th class="font-bold text-gray-500 uppercase tracking-wider text-xs">Transaction</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let tx of transactions" class="hover:bg-gray-50 transition-colors">
+          <td class="py-4">
+            <nz-tag [nzColor]="getTagColor(tx.type)">{{tx.label}}</nz-tag>
+          </td>
+          <td class="py-4">
+            <div class="flex flex-col">
+              <span class="font-black" [class]="tx.type === 'WITHDRAWAL' ? 'text-blue-600' : 'text-emerald-600'">
+                {{tx.type === 'WITHDRAWAL' ? '-' : '+'}}{{tx.amount | ethAmount}} ETH
+              </span>
+              <span *ngIf="formatApproxUsd(tx.amount)" class="text-xs font-semibold text-gray-400">{{formatApproxUsd(tx.amount)}}</span>
+            </div>
+          </td>
+          <td class="py-4">
+            <span class="font-bold text-gray-700" *ngIf="tx.sharesDelta; else noShares">
+              {{tx.type === 'WITHDRAWAL' ? '-' : '+'}}{{tx.sharesDelta}} LP
+            </span>
+            <ng-template #noShares>
+              <span class="text-gray-400">-</span>
+            </ng-template>
+          </td>
+          <td class="py-4 text-gray-600 font-medium">{{tx.timestamp | date:'medium'}}</td>
+          <td class="py-4">
+            <a *ngIf="getExplorerUrl(tx.hash) as explorerUrl; else localHash"
+              [href]="explorerUrl"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="inline-flex items-center gap-1 rounded bg-primary-bg px-2 py-1 font-mono text-sm text-[#8732fb] hover:text-[#7220e3] hover:underline">
+              {{shortenHash(tx.hash)}} <span nz-icon nzType="link" nzTheme="outline"></span>
+            </a>
+            <ng-template #localHash>
+              <span class="font-mono text-sm text-gray-600">{{shortenHash(tx.hash)}}</span>
+            </ng-template>
+          </td>
+        </tr>
+        <tr *ngIf="transactions.length === 0">
+          <td colspan="5" class="text-center py-10 text-gray-400 font-medium">
+            No investor transactions found for this wallet yet.
+          </td>
+        </tr>
+      </tbody>
+    </nz-table>
+  </nz-card>
+</div>

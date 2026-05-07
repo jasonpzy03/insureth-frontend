@@ -1,9 +1,7 @@
-import {Component, inject} from '@angular/core';
-import {Router} from '@angular/router';
-import {FormBuilder, Validators} from '@angular/forms';
-import {WalletService} from '../../../../core/services/wallet.service';
-import {AuthService} from '../../services/auth.service';
-import {tap} from 'rxjs';
+import { Component, inject, OnInit } from '@angular/core';
+import { Router, ActivatedRoute } from '@angular/router';
+import { WalletService } from '../../../../core/services/wallet.service';
+import { NzMessageService } from 'ng-zorro-antd/message';
 
 @Component({
   selector: 'app-login',
@@ -11,15 +9,27 @@ import {tap} from 'rxjs';
   styleUrl: './login.scss',
   standalone: false
 })
-export class LoginPage {
+export class LoginPage implements OnInit {
   walletService = inject(WalletService);
   private router = inject(Router);
-  private fb = inject(FormBuilder);
-  authService = inject(AuthService);
+  private route = inject(ActivatedRoute);
+  private message = inject(NzMessageService);
 
 
-  constructor() {
+  ngOnInit() {
     this.checkInitialConnection();
+    
+    // Show session expired message if redirected
+    const params = this.route.snapshot.queryParamMap;
+    if (params.get('expired') === 'true') {
+      // Clear query params immediately so the message doesn't persist on refresh
+      this.router.navigate([], { 
+        queryParams: { expired: null }, 
+        queryParamsHandling: 'merge',
+        replaceUrl: true 
+      });
+      this.message.warning('Session expired. Please log in again.', { nzDuration: 5000 });
+    }
   }
 
   private async checkInitialConnection() {
@@ -37,21 +47,12 @@ export class LoginPage {
   }
 
   private handleAuthenticatedRouting() {
-    this.authService.checkClientUserExists(this.walletService.address()!)
-      .pipe(
-        // you can process the boolean here if needed
-        tap((exists: boolean) => {
-          this.walletService.isProfileComplete.set(exists);
-          if (exists) {
-            localStorage.setItem('insureth_profile_completed', 'true');
-            this.router.navigate(['/dashboard'], { replaceUrl: true });
-          } else {
-            localStorage.removeItem('insureth_profile_completed');
-            this.router.navigate(['/signup'], { replaceUrl: true });
-          }
-        })
-      )
-      .subscribe(); // triggers the request
+    if (this.walletService.isProfileComplete()) {
+      this.router.navigate(['/dashboard'], { replaceUrl: true });
+    } else {
+      localStorage.removeItem('insureth_profile_completed');
+      this.router.navigate(['/signup'], { replaceUrl: true });
+    }
   }
 
 }

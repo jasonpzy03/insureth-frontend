@@ -1,0 +1,22 @@
+<div class="flex items-center justify-center w-full min-h-screen bg-gray-50">
+    <nz-card class="w-full max-w-[400px] p-5 text-center shadow-lg rounded-xl">
+      <div *ngIf="verifying" class="py-10 animate-pulse">
+        <nz-icon nzType="loading" nzTheme="outline" style="font-size: 48px; color: #1890ff;"></nz-icon>
+        <h3 class="mt-4 text-xl font-bold">Verifying your email...</h3>
+        <p class="text-gray-500">Please wait a moment while we map your address.</p>
+      </div>
+
+      <div *ngIf="success" class="py-10 animate-fade-in">
+        <nz-icon nzType="check-circle" nzTheme="twotone" [nzTwotoneColor]="'#52c41a'" style="font-size: 64px;"></nz-icon>
+        <h3 class="mt-4 text-xl font-bold text-green-600">Verification Successful!</h3>
+        <p class="text-gray-500">Your account has been fully verified and created. Redirecting to login...</p>
+      </div>
+
+      <div *ngIf="error" class="py-10 animate-fade-in">
+        <nz-icon nzType="close-circle" nzTheme="twotone" [nzTwotoneColor]="'#eb2f96'" style="font-size: 64px;"></nz-icon>
+        <h3 class="mt-4 text-xl font-bold text-red-600">Verification Failed</h3>
+        <p class="text-gray-500">The verification link is invalid, malformed, or has expired. Please try signing up again.</p>
+        <button nz-button nzType="primary" routerLink="/signup" class="mt-6">Back to Sign Up</button>
+      </div>
+    </nz-card>
+</div>

@@ -1,0 +1,83 @@
+<nz-header class="bg-white px-6">
+  <div class="flex items-center justify-between w-full h-full">
+    <div class="flex items-center flex-1">
+      <div class="mr-12">
+        <a routerLink="/" class="flex justify-center items-center no-underline gap-2">
+          <img src="/logo.png" alt="Insureth Logo" class="w-[32px] h-[32px]">
+          <h1 class="text-[20px] font-bold m-0">Insureth</h1>
+        </a>
+      </div>
+
+      <ul nz-menu class="!bg-transparent leading-[64px] border-b-0" nzMode="horizontal" *ngIf="authService.isAuthenticated()">
+        <li nz-menu-item routerLinkActive="ant-menu-item-selected" routerLink="/dashboard">Dashboard</li>
+        <li nz-menu-item routerLinkActive="ant-menu-item-selected" routerLink="/users">Users</li>
+        <li nz-menu-item routerLinkActive="ant-menu-item-selected" routerLink="/policy-operations">Policy Ops</li>
+        <li nz-submenu [nzTitle]="insuranceConfigTitle" class="no-underline-tab">
+          <ul>
+            <li nz-menu-item disabled class="!cursor-default !opacity-100">
+              <div class="flex flex-col leading-tight py-1">
+                <span class="text-[11px] uppercase tracking-[0.16em] text-gray-400">Flight Insurance</span>
+              </div>
+            </li>
+            <li nz-menu-item (click)="navigate('/insurance-config/flight-insurance/pricing-payouts')">Pricing &amp; Payouts</li>
+            <li nz-menu-item (click)="navigate('/insurance-config/flight-insurance/airlines')">Supported Airlines</li>
+            <li nz-menu-item (click)="navigate('/insurance-config/flight-insurance/airports')">Supported Airports</li>
+          </ul>
+        </li>
+        <ng-template #insuranceConfigTitle>
+          <span class="flex items-center gap-1">
+            Insurance Config
+            <span nz-icon nzType="down" class="text-xs opacity-70"></span>
+          </span>
+        </ng-template>
+        <li nz-submenu [nzTitle]="auditTrailTitle" class="no-underline-tab">
+          <ul>
+            <li nz-menu-item disabled class="!cursor-default !opacity-100">
+              <div class="flex flex-col leading-tight py-1">
+                <span class="text-[11px] uppercase tracking-[0.16em] text-gray-400">Audit Sources</span>
+              </div>
+            </li>
+            <li nz-menu-item (click)="navigate('/audit-trail/auth')">Auth Audit Trail</li>
+            <li nz-menu-item (click)="navigate('/audit-trail/insurance')">Insurance Audit Trail</li>
+          </ul>
+        </li>
+        <ng-template #auditTrailTitle>
+          <span class="flex items-center gap-1">
+            Audit Trail
+            <span nz-icon nzType="down" class="text-xs opacity-70"></span>
+          </span>
+        </ng-template>
+        <li nz-menu-item routerLinkActive="ant-menu-item-selected" (click)="navigate('/contract-admin')">Contract Admin</li>
+      </ul>
+    </div>
+
+    <div class="flex items-center">
+      <ng-container *ngIf="authService.isAuthenticated(); else loginBtn">
+        <button nz-button nzType="text" nz-dropdown [nzDropdownMenu]="userMenu" nzTrigger="click"
+          class="flex items-center gap-2 px-3 transition-all border border-gray-200 rounded-md h-9 text-gray-500 hover:border-primary hover:text-primary hover:bg-primary-bg">
+          <span class="font-mono text-[13px]">{{ shortAddress }}</span>
+          <span nz-icon nzType="down"></span>
+        </button>
+        <nz-dropdown-menu #userMenu="nzDropdownMenu">
+          <ul nz-menu class="overflow-hidden">
+            <li nz-menu-item>
+              <span nz-icon nzType="user"></span> {{ authService.user()?.username }}
+            </li>
+            <li nz-divider></li>
+            <li nz-menu-item (click)="logout()" class="!text-red-500 hover:!bg-red-50">
+              <span nz-icon nzType="logout"></span> Disconnect
+            </li>
+          </ul>
+        </nz-dropdown-menu>
+      </ng-container>
+
+      <ng-template #loginBtn>
+        <button nz-button nzType="primary" routerLink="/login"
+          class="font-semibold rounded-md bg-primary border-primary hover:bg-primary-hover hover:border-primary-hover"
+          *ngIf="!isLoginPage">
+          Connect Wallet
+        </button>
+      </ng-template>
+    </div>
+  </div>
+</nz-header>

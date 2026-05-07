@@ -13,12 +13,6 @@ module.exports = {
           bg: '#f4eeff',
         },
       },
-      borderRadius: {
-        'cp': '12px',
-      },
-      boxShadow: {
-        'cp': '0 12px 32px rgba(135, 50, 251, 0.1)',
-      }
     },
   },
   plugins: [],

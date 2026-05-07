@@ -1,0 +1,180 @@
+<div class="bo-contract-shell">
+  <div class="bo-contract-intro">
+    <p class="bo-contract-subtitle">Admin console for owner-only flight insurance controls. Update protocol settings and Chainlink configuration from a single internal workspace.</p>
+  </div>
+
+  <nz-alert
+    *ngIf="pageError()"
+    nzType="error"
+    [nzMessage]="pageError() || ''"
+    nzShowIcon>
+  </nz-alert>
+
+  <div class="bo-contract-grid">
+    <nz-card class="bo-contract-card bo-contract-card--wide">
+      <div class="bo-contract-card__header">
+        <div>
+          <span class="bo-contract-card__eyebrow">Access</span>
+          <h2>Owner Access Status</h2>
+        </div>
+        <button nz-button nzType="default" (click)="refreshSnapshot()" [disabled]="isLoading()" [nzLoading]="isLoading()">Refresh</button>
+      </div>
+
+      <div class="bo-contract-meta" *ngIf="snapshot() as s">
+        <div>
+          <span class="bo-contract-meta__label">Contract</span>
+          <p>{{ contractAddress }}</p>
+        </div>
+        <div>
+          <span class="bo-contract-meta__label">Owner</span>
+          <p>{{ s.owner }}</p>
+        </div>
+        <div>
+          <span class="bo-contract-meta__label">Connected Wallet</span>
+          <p>{{ s.connectedWallet || 'Not connected' }}</p>
+        </div>
+        <div>
+          <span class="bo-contract-meta__label">Permission</span>
+          <nz-tag [nzColor]="s.isOwner ? 'success' : 'error'">{{ s.isOwner ? 'Owner Connected' : 'Owner Required' }}</nz-tag>
+        </div>
+      </div>
+    </nz-card>
+
+    <nz-card class="bo-contract-card">
+      <div class="bo-contract-card__header">
+        <div>
+          <span class="bo-contract-card__eyebrow">Oracle</span>
+          <h2>Chainlink Config</h2>
+        </div>
+      </div>
+
+      <form nz-form [formGroup]="chainlinkForm" (ngSubmit)="saveChainlinkConfig()" class="bo-contract-form">
+        <nz-form-item>
+          <nz-form-label [nzSpan]="24" nzFor="sourceCode">Source Code</nz-form-label>
+          <nz-form-control [nzSpan]="24">
+            <textarea id="sourceCode" nz-input rows="8" formControlName="sourceCode" placeholder="Inline JavaScript for Chainlink Functions"></textarea>
+          </nz-form-control>
+        </nz-form-item>
+
+        <nz-form-item>
+          <nz-form-label [nzSpan]="24" nzFor="subscriptionId">Subscription ID</nz-form-label>
+          <nz-form-control [nzSpan]="24">
+            <nz-input-number id="subscriptionId" class="w-full" formControlName="subscriptionId"></nz-input-number>
+          </nz-form-control>
+        </nz-form-item>
+
+        <nz-form-item>
+          <nz-form-label [nzSpan]="24" nzFor="gasLimit">Gas Limit</nz-form-label>
+          <nz-form-control [nzSpan]="24">
+            <nz-input-number id="gasLimit" class="w-full" formControlName="gasLimit"></nz-input-number>
+          </nz-form-control>
+        </nz-form-item>
+
+        <div class="bo-contract-form__actions">
+          <button nz-button nzType="primary" [disabled]="!isOwner() || chainlinkSaving()" [nzLoading]="chainlinkSaving()">Save Chainlink Config</button>
+        </div>
+      </form>
+    </nz-card>
+
+    <nz-card class="bo-contract-card">
+      <div class="bo-contract-card__header">
+        <div>
+          <span class="bo-contract-card__eyebrow">Controls</span>
+          <h2>Protocol Settings</h2>
+        </div>
+      </div>
+
+      <form nz-form [formGroup]="controlsForm" (ngSubmit)="saveControls()" class="bo-contract-form">
+        <nz-form-item>
+          <nz-form-label [nzSpan]="24" nzFor="verificationBufferSeconds">Verification Buffer (seconds)</nz-form-label>
+          <nz-form-control [nzSpan]="24">
+            <nz-input-number id="verificationBufferSeconds" class="w-full" formControlName="verificationBufferSeconds"></nz-input-number>
+          </nz-form-control>
+        </nz-form-item>
+
+        <nz-form-item>
+          <nz-form-label [nzSpan]="24" nzFor="minPurchaseLeadTimeSeconds">Min Purchase Lead Time (seconds)</nz-form-label>
+          <nz-form-control [nzSpan]="24">
+            <nz-input-number id="minPurchaseLeadTimeSeconds" class="w-full" formControlName="minPurchaseLeadTimeSeconds"></nz-input-number>
+          </nz-form-control>
+        </nz-form-item>
+
+        <nz-form-item>
+          <nz-form-label [nzSpan]="24" nzFor="maxPurchaseLeadTimeSeconds">Max Purchase Lead Time (seconds)</nz-form-label>
+          <nz-form-control [nzSpan]="24">
+            <nz-input-number id="maxPurchaseLeadTimeSeconds" class="w-full" formControlName="maxPurchaseLeadTimeSeconds"></nz-input-number>
+          </nz-form-control>
+        </nz-form-item>
+
+        <nz-form-item>
+          <nz-form-label [nzSpan]="24" nzFor="postDeparturePurchaseGracePeriodSeconds">Post-Departure Purchase Grace (seconds)</nz-form-label>
+          <nz-form-control [nzSpan]="24">
+            <nz-input-number id="postDeparturePurchaseGracePeriodSeconds" class="w-full" formControlName="postDeparturePurchaseGracePeriodSeconds"></nz-input-number>
+          </nz-form-control>
+        </nz-form-item>
+
+        <nz-form-item>
+          <nz-form-label [nzSpan]="24" nzFor="platformFeeMode">Platform Fee Mode</nz-form-label>
+          <nz-form-control [nzSpan]="24">
+            <nz-select id="platformFeeMode" formControlName="platformFeeMode">
+              <nz-option *ngFor="let option of feeModeOptions" [nzLabel]="option.label" [nzValue]="option.value"></nz-option>
+            </nz-select>
+          </nz-form-control>
+        </nz-form-item>
+
+        <nz-form-item>
+          <nz-form-label [nzSpan]="24" nzFor="platformFeePercentage">Platform Fee (%)</nz-form-label>
+          <nz-form-control [nzSpan]="24">
+            <nz-input-number id="platformFeePercentage" class="w-full" formControlName="platformFeePercentage"></nz-input-number>
+          </nz-form-control>
+        </nz-form-item>
+
+        <nz-form-item>
+          <nz-form-label [nzSpan]="24" nzFor="platformFeeFlatAmountEth">Platform Fee (ETH)</nz-form-label>
+          <nz-form-control [nzSpan]="24">
+            <nz-input-number id="platformFeeFlatAmountEth" class="w-full" formControlName="platformFeeFlatAmountEth" [nzMin]="0" [nzStep]="0.001"></nz-input-number>
+          </nz-form-control>
+        </nz-form-item>
+
+        <nz-form-item>
+          <nz-form-label [nzSpan]="24" nzFor="minDelayPayoutThresholdMinutes">Min Delay Threshold (minutes)</nz-form-label>
+          <nz-form-control [nzSpan]="24">
+            <nz-input-number id="minDelayPayoutThresholdMinutes" class="w-full" formControlName="minDelayPayoutThresholdMinutes" [nzMin]="1"></nz-input-number>
+          </nz-form-control>
+        </nz-form-item>
+
+        <nz-form-item>
+          <nz-form-label [nzSpan]="24" nzFor="maxDelayPayoutThresholdMinutes">Max Delay Threshold (minutes)</nz-form-label>
+          <nz-form-control [nzSpan]="24">
+            <nz-input-number id="maxDelayPayoutThresholdMinutes" class="w-full" formControlName="maxDelayPayoutThresholdMinutes" [nzMin]="1"></nz-input-number>
+          </nz-form-control>
+        </nz-form-item>
+
+        <nz-form-item>
+          <nz-form-label [nzSpan]="24" nzFor="minDelayPayoutMultiplierPercent">Payout at Min Delay (%)</nz-form-label>
+          <nz-form-control [nzSpan]="24">
+            <nz-input-number id="minDelayPayoutMultiplierPercent" class="w-full" formControlName="minDelayPayoutMultiplierPercent" [nzMin]="0" [nzStep]="1"></nz-input-number>
+          </nz-form-control>
+        </nz-form-item>
+
+        <nz-form-item>
+          <nz-form-label [nzSpan]="24" nzFor="maxDelayPayoutMultiplierPercent">Payout at Max Delay (%)</nz-form-label>
+          <nz-form-control [nzSpan]="24">
+            <nz-input-number id="maxDelayPayoutMultiplierPercent" class="w-full" formControlName="maxDelayPayoutMultiplierPercent" [nzMin]="0" [nzStep]="1"></nz-input-number>
+          </nz-form-control>
+        </nz-form-item>
+
+        <nz-form-item>
+          <nz-form-label [nzSpan]="24" nzFor="cancellationPayoutMultiplierPercent">Cancellation Payout (%)</nz-form-label>
+          <nz-form-control [nzSpan]="24">
+            <nz-input-number id="cancellationPayoutMultiplierPercent" class="w-full" formControlName="cancellationPayoutMultiplierPercent" [nzMin]="0" [nzStep]="1"></nz-input-number>
+          </nz-form-control>
+        </nz-form-item>
+
+        <div class="bo-contract-form__actions">
+          <button nz-button nzType="primary" [disabled]="!isOwner() || controlsSaving()" [nzLoading]="controlsSaving()">Save Controls</button>
+        </div>
+      </form>
+    </nz-card>
+  </div>
+</div>

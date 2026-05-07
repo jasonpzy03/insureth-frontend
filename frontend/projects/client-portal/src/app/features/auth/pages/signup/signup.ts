@@ -17,6 +17,8 @@ export class SignupPage {
   private fb = inject(FormBuilder);
   private authService = inject(AuthService);
 
+  awaitingVerification = false;
+
 
   profileForm = this.fb.group({
     username: ['', [Validators.required, Validators.minLength(3)]],
@@ -50,27 +52,18 @@ export class SignupPage {
 
     const formValue = this.profileForm.value;
 
-    this.authService.createClientUser({
+    this.authService.initiateSignupClientUser({
       walletAddress: this.walletService.address()!,
       username: formValue.username!,
       email: formValue.email!
     })
       .pipe(
         tap((res) => {
-          // assuming success = user created
-          this.walletService.isProfileComplete.set(true);
-          localStorage.setItem('insureth_profile_completed', 'true');
-
-          this.router.navigate(['/dashboard'], { replaceUrl: true });
+          this.awaitingVerification = true;
         })
       )
       .subscribe({
-        error: (err) => {
-          console.error('Create user failed:', err);
-
-          // optional UX improvement
-          // show error message here (NzAlert, toast, etc.)
-        }
+        error: () => {}
       });
   }
 }

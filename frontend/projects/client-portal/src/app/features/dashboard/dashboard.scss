@@ -1,1 +1,59 @@
-// Styles handled by Tailwind in the template.
+:host ::ng-deep .dashboard-summary-button.ant-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  line-height: 1;
+}
+
+:host ::ng-deep .dashboard-summary-button.ant-btn > span {
+  display: inline-flex;
+  align-items: center;
+  line-height: 1;
+}
+
+:host ::ng-deep .dashboard-summary-button.ant-btn .anticon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  vertical-align: middle;
+  line-height: 1;
+}
+
+:host ::ng-deep .dashboard-summary-button.ant-btn .anticon svg {
+  display: block;
+}
+
+.dashboard-metric-amount {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.35rem;
+  min-width: 0;
+}
+
+.dashboard-metric-amount__value {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  font-size: clamp(2rem, 2vw + 1.25rem, 2.5rem);
+  font-weight: 900;
+  line-height: 0.95;
+  letter-spacing: -0.04em;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.dashboard-metric-amount__unit {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.6rem;
+  border-radius: 999px;
+  background: #f3f4f6;
+  color: #6b7280;
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  line-height: 1;
+}

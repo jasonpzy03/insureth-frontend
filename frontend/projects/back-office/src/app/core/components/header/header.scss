@@ -1,0 +1,18 @@
+nz-header {
+  border-bottom: 1px solid #e8e8e8 !important;
+}
+
+h1 {
+  margin-bottom: 0 !important;
+}
+
+:host ::ng-deep .no-underline-tab.ant-menu-submenu-selected,
+:host ::ng-deep .no-underline-tab.ant-menu-submenu-open {
+  color: inherit !important;
+}
+
+:host ::ng-deep .no-underline-tab.ant-menu-submenu-selected::after,
+:host ::ng-deep .no-underline-tab.ant-menu-submenu-open::after,
+:host ::ng-deep .no-underline-tab::after {
+  border-bottom: none !important;
+}

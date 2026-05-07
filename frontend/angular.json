@@ -32,23 +32,15 @@
             "styles": [
               "projects/client-portal/src/theme.less",
               "projects/client-portal/src/styles.scss"
-            ],
-            "server": "projects/client-portal/src/main.server.ts",
-            "outputMode": "server",
-            "security": {
-              "allowedHosts": []
-            },
-            "ssr": {
-              "entry": "projects/client-portal/src/server.ts"
-            }
+            ]
           },
           "configurations": {
             "production": {
               "budgets": [
                 {
                   "type": "initial",
-                  "maximumWarning": "500kB",
-                  "maximumError": "1MB"
+                  "maximumWarning": "3MB",
+                  "maximumError": "4MB"
                 },
                 {
                   "type": "anyComponentStyle",
@@ -130,6 +122,7 @@
               }
             ],
             "styles": [
+              "projects/back-office/src/theme.less",
               "projects/back-office/src/styles.scss"
             ]
           },
@@ -138,8 +131,8 @@
               "budgets": [
                 {
                   "type": "initial",
-                  "maximumWarning": "500kB",
-                  "maximumError": "1MB"
+                  "maximumWarning": "3MB",
+                  "maximumError": "4MB"
                 },
                 {
                   "type": "anyComponentStyle",
@@ -188,7 +181,114 @@
               }
             ],
             "styles": [
+              "projects/back-office/src/theme.less",
               "projects/back-office/src/styles.scss"
+            ]
+          }
+        }
+      }
+    },
+    "insureth-landing": {
+      "projectType": "application",
+      "schematics": {
+        "@schematics/angular:component": {
+          "style": "scss"
+        }
+      },
+      "root": "projects/insureth-landing",
+      "sourceRoot": "projects/insureth-landing/src",
+      "prefix": "app",
+      "architect": {
+        "build": {
+          "builder": "@angular/build:application",
+          "options": {
+            "browser": "projects/insureth-landing/src/main.ts",
+            "polyfills": [
+              "zone.js"
+            ],
+            "tsConfig": "projects/insureth-landing/tsconfig.app.json",
+            "inlineStyleLanguage": "scss",
+            "assets": [
+              {
+                "glob": "**/*",
+                "input": "projects/insureth-landing/public"
+              },
+              {
+                "glob": "logo*.png",
+                "input": "projects/client-portal/public"
+              }
+            ],
+            "styles": [
+              "projects/insureth-landing/src/theme.less",
+              "projects/insureth-landing/src/styles.scss"
+            ],
+            "server": "projects/insureth-landing/src/main.server.ts",
+            "outputMode": "static",
+            "security": {
+              "allowedHosts": []
+            }
+          },
+          "configurations": {
+            "production": {
+              "budgets": [
+                {
+                  "type": "initial",
+                  "maximumWarning": "2MB",
+                  "maximumError": "3MB"
+                },
+                {
+                  "type": "anyComponentStyle",
+                  "maximumWarning": "8kB",
+                  "maximumError": "12kB"
+                }
+              ],
+              "outputHashing": "all"
+            },
+            "development": {
+              "optimization": false,
+              "extractLicenses": false,
+              "sourceMap": true
+            }
+          },
+          "defaultConfiguration": "production"
+        },
+        "serve": {
+          "builder": "@angular/build:dev-server",
+          "configurations": {
+            "production": {
+              "buildTarget": "insureth-landing:build:production"
+            },
+            "development": {
+              "buildTarget": "insureth-landing:build:development"
+            }
+          },
+          "defaultConfiguration": "development"
+        },
+        "extract-i18n": {
+          "builder": "@angular/build:extract-i18n"
+        },
+        "test": {
+          "builder": "@angular/build:karma",
+          "options": {
+            "polyfills": [
+              "zone.js",
+              "zone.js/testing"
+            ],
+            "tsConfig": "projects/insureth-landing/tsconfig.spec.json",
+            "inlineStyleLanguage": "scss",
+            "assets": [
+              {
+                "glob": "**/*",
+                "input": "projects/insureth-landing/public"
+              },
+              {
+                "glob": "logo*.png",
+                "input": "projects/client-portal/public"
+              }
+            ],
+            "styles": [
+              "projects/insureth-landing/src/theme.less",
+              "projects/insureth-landing/src/styles.scss"
             ]
           }
         }

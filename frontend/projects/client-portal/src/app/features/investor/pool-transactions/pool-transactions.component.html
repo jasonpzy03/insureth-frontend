@@ -1,0 +1,63 @@
+<div class="p-6 md:p-10 max-w-6xl mx-auto">
+  <div class="flex flex-col md:flex-row md:items-end md:justify-between gap-4 mb-8">
+    <div>
+      <h2 class="text-3xl font-black text-gray-800">{{poolName}} Transactions</h2>
+      <p class="text-gray-500 font-medium mt-1">Review deposits, withdrawals, premiums collected, payouts, and donations affecting this pool.</p>
+    </div>
+    <div class="flex gap-3">
+      <button nz-button nzType="default" routerLink="/investor/pools" class="rounded-lg h-10 font-bold">
+        <span nz-icon nzType="arrow-left"></span> Back to Pools
+      </button>
+      <button nz-button nzType="primary" (click)="loadTransactions()" class="rounded-lg h-10 font-bold bg-[#8732fb] border-[#8732fb] hover:bg-[#7220e3] hover:border-[#7220e3]">
+        <span nz-icon nzType="reload"></span> Refresh
+      </button>
+    </div>
+  </div>
+
+  <nz-card *ngIf="isLoading" class="shadow-sm border-0 rounded-2xl overflow-hidden bg-white">
+    <nz-skeleton [nzLoading]="true" [nzActive]="true" [nzParagraph]="{ rows: 6 }"></nz-skeleton>
+  </nz-card>
+
+  <nz-card *ngIf="!isLoading" nzTitle="Pool Activity" class="shadow-sm border-0 rounded-2xl overflow-hidden" [nzBodyStyle]="{padding: '0'}">
+    <nz-table [nzData]="transactions" [nzShowPagination]="transactions.length > 10" [nzPageSize]="10">
+      <thead>
+        <tr class="bg-gray-50 border-none">
+          <th class="font-bold text-gray-500 uppercase tracking-wider text-xs">Type</th>
+          <th class="font-bold text-gray-500 uppercase tracking-wider text-xs">Amount</th>
+          <th class="font-bold text-gray-500 uppercase tracking-wider text-xs">Shares</th>
+          <th class="font-bold text-gray-500 uppercase tracking-wider text-xs">When</th>
+          <th class="font-bold text-gray-500 uppercase tracking-wider text-xs">Transaction</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let tx of transactions" class="hover:bg-gray-50 transition-colors">
+          <td class="py-4">
+            <nz-tag [nzColor]="getTagColor(tx.type)">{{tx.label}}</nz-tag>
+          </td>
+          <td class="py-4">
+            <span class="font-black" [class]="getAmountTone(tx.type)">
+              {{getSignedAmount(tx.type, tx.amount)}} ETH
+            </span>
+          </td>
+          <td class="py-4">
+            <span class="font-bold text-gray-700" *ngIf="tx.sharesDelta; else noShares">
+              {{tx.type === 'WITHDRAWAL' ? '-' : '+'}}{{tx.sharesDelta}} LP
+            </span>
+            <ng-template #noShares>
+              <span class="text-gray-400">-</span>
+            </ng-template>
+          </td>
+          <td class="py-4 text-gray-600 font-medium">{{tx.timestamp | date:'medium'}}</td>
+          <td class="py-4">
+            <span class="font-mono text-sm text-gray-600">{{shortenHash(tx.hash)}}</span>
+          </td>
+        </tr>
+        <tr *ngIf="transactions.length === 0">
+          <td colspan="5" class="text-center py-10 text-gray-400 font-medium">
+            No on-chain transactions found for this pool yet.
+          </td>
+        </tr>
+      </tbody>
+    </nz-table>
+  </nz-card>
+</div>

@@ -35,6 +35,12 @@
     },
     {
       "path": "./projects/back-office/tsconfig.spec.json"
+    },
+    {
+      "path": "./projects/insureth-landing/tsconfig.app.json"
+    },
+    {
+      "path": "./projects/insureth-landing/tsconfig.spec.json"
     }
   ]
 }

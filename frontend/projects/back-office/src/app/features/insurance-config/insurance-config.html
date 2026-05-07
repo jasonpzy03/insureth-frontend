@@ -1,0 +1,72 @@
+<div class="insurance-config-shell">
+  <div class="insurance-config-intro">
+    <p class="insurance-config-subtitle">Manage the off-chain quote engine inputs from one internal workspace. Settlement thresholds and payout rules are controlled on-chain in Contract Admin.</p>
+  </div>
+
+  <nz-alert
+    *ngIf="error()"
+    class="insurance-config-alert"
+    nzType="error"
+    [nzMessage]="error() || ''"
+    nzShowIcon>
+  </nz-alert>
+
+  <div class="insurance-config-actions">
+    <button nz-button nzType="default" type="button" (click)="loadConfig()" [disabled]="isLoading()" [nzLoading]="isLoading()">
+      Refresh
+    </button>
+    <button nz-button nzType="primary" type="button" (click)="save()" [disabled]="isSaving()" [nzLoading]="isSaving()">
+      Save Changes
+    </button>
+  </div>
+
+  <form nz-form [formGroup]="configForm" class="insurance-config-grid">
+    <nz-card class="insurance-config-card insurance-config-card--wide">
+      <div class="insurance-config-card__header">
+        <div>
+          <span class="insurance-config-card__eyebrow">Quote Engine</span>
+          <h2>Off-Chain Pricing Settings</h2>
+        </div>
+      </div>
+
+      <div class="insurance-config-form-grid">
+        <nz-form-item>
+          <nz-form-label [nzSpan]="24">Product Code</nz-form-label>
+          <nz-form-control [nzSpan]="24"><input nz-input formControlName="productCode"></nz-form-control>
+        </nz-form-item>
+
+        <nz-form-item>
+          <nz-form-label [nzSpan]="24">Currency</nz-form-label>
+          <nz-form-control [nzSpan]="24"><input nz-input formControlName="currency"></nz-form-control>
+        </nz-form-item>
+
+        <nz-form-item>
+          <nz-form-label [nzSpan]="24">Base Premium</nz-form-label>
+          <nz-form-control [nzSpan]="24"><nz-input-number formControlName="basePremiumEth" [nzMin]="0" [nzStep]="0.1" class="w-full"></nz-input-number></nz-form-control>
+        </nz-form-item>
+
+        <nz-divider class="insurance-config-form-grid__span-2">Premium Formula Inputs</nz-divider>
+
+        <nz-form-item>
+          <nz-form-label [nzSpan]="24">Base Rate</nz-form-label>
+          <nz-form-control [nzSpan]="24"><nz-input-number formControlName="premiumBaseRate" [nzMin]="0" [nzStep]="0.01" class="w-full"></nz-input-number></nz-form-control>
+        </nz-form-item>
+
+        <nz-form-item>
+          <nz-form-label [nzSpan]="24">Per Day Multiplier</nz-form-label>
+          <nz-form-control [nzSpan]="24"><nz-input-number formControlName="premiumPerDayMultiplier" [nzMin]="0" [nzStep]="0.001" class="w-full"></nz-input-number></nz-form-control>
+        </nz-form-item>
+
+        <nz-form-item>
+          <nz-form-label [nzSpan]="24">Demand Multiplier</nz-form-label>
+          <nz-form-control [nzSpan]="24"><nz-input-number formControlName="premiumDemandMultiplier" [nzMin]="0" [nzStep]="0.01" class="w-full"></nz-input-number></nz-form-control>
+        </nz-form-item>
+
+        <nz-form-item>
+          <nz-form-label [nzSpan]="24">Max Multiplier</nz-form-label>
+          <nz-form-control [nzSpan]="24"><nz-input-number formControlName="premiumMaxMultiplier" [nzMin]="0" [nzStep]="0.01" class="w-full"></nz-input-number></nz-form-control>
+        </nz-form-item>
+      </div>
+    </nz-card>
+  </form>
+</div>

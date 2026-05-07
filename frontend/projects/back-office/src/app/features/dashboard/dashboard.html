@@ -1,0 +1,32 @@
+<div class="bo-dashboard-shell">
+  <div class="bo-dashboard-intro">
+    <p class="bo-dashboard-subtitle">Monitor admin activity, policy operations, and risk workflows from a separate internal workspace.</p>
+  </div>
+
+  <div class="bo-dashboard-grid">
+    <nz-card class="bo-dashboard-card">
+      <span class="bo-dashboard-card__eyebrow">Current Session</span>
+      <h2>{{ authService.user()?.username }}</h2>
+      <p>{{ authService.user()?.email }}</p>
+      <nz-tag nzColor="geekblue">{{ authService.user()?.role }}</nz-tag>
+    </nz-card>
+
+    <nz-card class="bo-dashboard-card">
+      <span class="bo-dashboard-card__eyebrow">Setup Status</span>
+      <h2>Backoffice Ready</h2>
+      <p>Shared theme, NG-ZORRO, `ethers`, JWT auth, and nonce-based login are now wired for the admin app.</p>
+    </nz-card>
+
+    <nz-card class="bo-dashboard-card bo-dashboard-card--wide">
+      <span class="bo-dashboard-card__eyebrow">Next Build Surface</span>
+      <p>Recommended next pages:</p>
+      <ul>
+        <li>Claims and payout review queue</li>
+        <li>Policy search and manual investigation</li>
+        <li>Liquidity pool monitoring</li>
+        <li><a routerLink="/users">Backoffice user management</a> is now available for admin onboarding.</li>
+            <li><a routerLink="/insurance-config/flight-insurance/pricing-payouts">Flight insurance admin</a> now separates off-chain quote settings from on-chain contract settlement controls.</li>
+      </ul>
+    </nz-card>
+  </div>
+</div>

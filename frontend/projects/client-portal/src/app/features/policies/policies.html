@@ -1,0 +1,143 @@
+<div class="p-6 md:p-10 max-w-7xl mx-auto">
+  <div class="mb-6">
+    <p class="text-gray-500 font-medium text-lg m-0">Review your active and resolved flight insurance policies, track payouts, and filter coverage by route, flight, or status.</p>
+  </div>
+
+  <div class="mb-6">
+    <div class="flex flex-col md:flex-row flex-wrap gap-3 w-full no-animate-bar">
+      <nz-input-group [nzPrefix]="searchPrefix" class="w-full md:flex-1 rounded-lg overflow-hidden border-gray-200">
+        <input type="text" nz-input placeholder="Search by ID, Flight, Airport..." [(ngModel)]="searchQuery" (ngModelChange)="applyFilters()" class="border-0 shadow-none outline-none"/>
+      </nz-input-group>
+      <ng-template #searchPrefix>
+        <span nz-icon nzType="search" class="text-gray-400"></span>
+      </ng-template>
+
+      <nz-select [(ngModel)]="selectedType" (ngModelChange)="applyFilters()" class="w-full md:w-[180px] h-10" nzShowSearch nzPlaceHolder="Insurance Type">
+        <nz-option nzValue="All" nzLabel="All Insurances"></nz-option>
+        <nz-option nzValue="Flight Insurance" nzLabel="Flight Insurance"></nz-option>
+      </nz-select>
+
+      <nz-select [(ngModel)]="selectedStatus" (ngModelChange)="applyFilters()" class="w-full md:w-[180px] h-10" nzShowSearch nzPlaceHolder="Policy Status">
+        <nz-option nzValue="All" nzLabel="All Statuses"></nz-option>
+        <nz-option nzValue="Scheduled" nzLabel="Scheduled"></nz-option>
+        <nz-option nzValue="Delayed" nzLabel="Delayed"></nz-option>
+        <nz-option nzValue="Cancelled" nzLabel="Cancelled"></nz-option>
+        <nz-option nzValue="Payout Distributed" nzLabel="Payout Dist."></nz-option>
+        <nz-option nzValue="Concluded" nzLabel="Concluded"></nz-option>
+      </nz-select>
+    </div>
+  </div>
+
+  <div *ngIf="isLoading" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    <nz-card *ngFor="let _ of [1,2,3,4,5,6]" class="shadow-md rounded-2xl overflow-hidden border-0 bg-white">
+      <nz-skeleton [nzLoading]="true" [nzActive]="true" [nzParagraph]="{ rows: 6 }"></nz-skeleton>
+    </nz-card>
+  </div>
+
+  <div *ngIf="!isLoading && filteredPolicies.length === 0" class="text-center py-16 bg-white rounded-2xl shadow-sm">
+    <span nz-icon nzType="filter" nzTheme="outline" class="text-6xl text-gray-300 mb-4 block"></span>
+    <h3 class="text-xl font-semibold text-gray-600">No matching policies found</h3>
+    <p class="text-gray-400 mt-2">Try adjusting your search query or filters.</p>
+  </div>
+
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    <nz-card *ngFor="let policy of filteredPolicies" [routerLink]="['/policies', policy.policyId]" class="group shadow-md rounded-2xl overflow-hidden border border-transparent hover:border-violet-200 hover:shadow-xl hover:-translate-y-1 transition-all duration-200 cursor-pointer relative">
+
+      <!-- Universal Type Badge -->
+      <div class="absolute top-0 left-0 bg-[#8732fb] text-white text-[10px] font-bold uppercase tracking-wider px-3 py-1 rounded-br-lg z-10 shadow-sm border-b border-r border-[#7220e3]">
+        {{policy.type}}
+      </div>
+
+      <div class="flex justify-between items-start mb-4 pb-4 border-b border-gray-100 mt-4">
+        <div>
+          <div class="flex flex-wrap items-center gap-2 mb-1">
+            <span class="text-xs font-bold text-gray-400 uppercase tracking-wider block">Policy #{{policy.policyId}}</span>
+            <span class="inline-flex items-center gap-1 rounded-full bg-violet-50 px-2 py-1 text-[11px] font-bold text-violet-700 border border-violet-100">
+              <span nz-icon nzType="deployment-unit" nzTheme="outline" class="text-[10px]"></span>
+              {{policy.nft?.collectionSymbol || 'IFP'}} #{{policy.nft?.tokenId || policy.policyId}}
+            </span>
+          </div>
+          <h3 class="text-xl font-black text-gray-800 m-0">{{policy.flightNumber}}</h3>
+        </div>
+        <nz-tag [nzColor]="getDisplayStatusColor(policy)" class="rounded-full border-0 px-3 font-semibold m-0">
+          {{getDisplayStatusText(policy)}}
+        </nz-tag>
+      </div>
+
+      <div class="flex items-center justify-between mb-6 px-2">
+        <div class="text-center">
+          <span class="text-2xl font-bold text-gray-800 block">{{policy.origin}}</span>
+          <span class="text-xs text-gray-500 font-medium">Origin</span>
+        </div>
+        <i nz-icon nzType="swap-right" class="text-2xl text-gray-300"></i>
+        <div class="text-center">
+          <span class="text-2xl font-bold text-gray-800 block">{{policy.destination}}</span>
+          <span class="text-xs text-gray-500 font-medium">Destination</span>
+        </div>
+      </div>
+
+        <div class="bg-gray-50 rounded-xl p-4 mb-4">
+          <div class="flex justify-between items-center mb-2">
+            <span class="text-sm font-semibold text-gray-500">Departure</span>
+          <span class="text-sm font-bold text-gray-800 text-right">
+            {{formatDepartureTime(policy)}}
+            <span class="block text-xs font-semibold text-gray-400 mt-1">{{getDepartureTimezone(policy)}}</span>
+          </span>
+          </div>
+        <div class="flex justify-between items-center">
+          <span class="text-sm font-semibold text-gray-500">Premium</span>
+          <span class="text-sm font-bold text-gray-800">{{policy.premium}} ETH</span>
+        </div>
+        <div class="mt-3 pt-3 border-t border-gray-200">
+          <span class="text-[11px] font-bold text-gray-400 uppercase tracking-wider block mb-1">Your Payout Tier</span>
+          <div class="flex flex-col gap-2">
+            <div *ngFor="let tier of getPayoutTierRows(policy)" class="flex items-center justify-between text-sm">
+              <span class="font-semibold text-gray-500">{{tier.label}}</span>
+              <span class="font-bold text-gray-800">{{tier.value}}</span>
+            </div>
+          </div>
+          <p class="text-xs font-medium text-gray-500 mt-3 mb-0 leading-5">{{getPayoutTierNote(policy)}}</p>
+        </div>
+        <div *ngIf="getDelayDisplay(policy)" class="flex justify-between items-center mt-2">
+          <span class="text-sm font-semibold text-gray-500">Verified Delay</span>
+          <span class="text-sm font-bold text-amber-600">{{getDelayDisplay(policy)}}</span>
+        </div>
+      </div>
+
+      <div [class]="getResolutionCardClasses(policy) + ' rounded-xl p-4 mb-4'">
+        <span
+          class="text-[11px] font-bold uppercase tracking-wider block mb-1"
+          [class.text-amber-700]="isOracleVerificationStuck(policy)"
+          [class.text-blue-600]="!isOracleVerificationStuck(policy)">
+          {{getResolutionLabel(policy)}}
+        </span>
+        <p
+          class="text-sm font-medium m-0"
+          [class.text-amber-950]="isOracleVerificationStuck(policy)"
+          [class.text-blue-900]="!isOracleVerificationStuck(policy)">
+          {{getPayoutExplanation(policy)}}
+        </p>
+        <div *ngIf="isOracleVerificationStuck(policy)" class="mt-3 pt-3 border-t border-amber-200">
+          <span class="text-xs font-semibold text-amber-800">
+            Expected verification time: {{formatOracleExpectedTime(policy)}}
+          </span>
+        </div>
+      </div>
+
+      <div *ngIf="policy.payoutAmount > 0" class="bg-emerald-50 rounded-xl p-3 border border-emerald-100 text-center">
+        <span class="text-xs font-bold text-emerald-600 uppercase block mb-1">Payout Distributed</span>
+        <span class="text-lg font-black text-emerald-600">{{policy.payoutAmount}} ETH</span>
+      </div>
+      <div *ngIf="policy.claimed && policy.payoutAmount === 0" class="bg-gray-50 rounded-xl p-3 border border-gray-200 text-center">
+        <span class="text-sm font-bold text-gray-500">Policy Concluded</span>
+      </div>
+
+      <div class="mt-4 pt-4 border-t border-gray-100 flex items-center justify-between text-sm">
+        <span class="font-semibold text-violet-700 group-hover:text-violet-900 transition-colors">View policy details</span>
+        <span class="inline-flex items-center justify-center w-9 h-9 rounded-full bg-violet-50 text-violet-700 border border-violet-100 group-hover:bg-violet-100 group-hover:border-violet-200 group-hover:translate-x-1 transition-all">
+          <span class="text-base font-black leading-none">></span>
+        </span>
+      </div>
+    </nz-card>
+  </div>
+</div>

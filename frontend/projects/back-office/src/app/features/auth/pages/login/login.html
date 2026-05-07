@@ -1,0 +1,38 @@
+<div class="flex-1 flex items-center justify-center w-full">
+  <nz-card class="w-full max-w-[400px] p-5">
+    <!-- Header -->
+    <div class="mb-8 text-center">
+      <img src="/logo.png" alt="Insureth Logo" class="w-[60px] h-[60px] mx-auto">
+      <h1 nz-typography class="m-0 text-2xl font-extrabold tracking-tight text-black">Backoffice Portal</h1>
+      <p nz-typography nzType="secondary" class="mt-1">
+        Administrative access for operations and workflows
+      </p>
+    </div>
+
+    <!-- Wallet Connect Section -->
+    <div class="text-center">
+      <h3 class="mb-3 font-bold text-black">Login to Admin Dashboard</h3>
+      <p class="mb-6 leading-relaxed">
+        Please connect your authorized MetaMask wallet to access administrative tools and configuration.
+      </p>
+
+      <nz-alert *ngIf="walletService.error()" nzType="error" [nzMessage]="walletService.error()!" nzShowIcon
+        class="mb-4"></nz-alert>
+      <nz-alert *ngIf="!walletService.error() && authService.error()" nzType="error" [nzMessage]="authService.error()!" nzShowIcon
+        class="mb-4"></nz-alert>
+
+      <button nz-button nzType="default" nzBlock nzSize="large" (click)="connectWallet()"
+        [nzLoading]="authService.isLoading() || walletService.isConnecting()"
+        class="flex items-center justify-center w-full h-[52px] gap-3 font-bold transition-all duration-300 rounded-lg">
+        <span nz-icon nzType="wallet" *ngIf="!authService.isLoading() && !walletService.isConnecting()" class="text-lg"></span>
+        {{ authService.isLoading() || walletService.isConnecting() ? 'Connecting & Verifying...' : 'Connect MetaMask' }}
+      </button>
+
+      <div class="mt-4 text-center">
+        <p class="text-[11px] text-gray-400 uppercase tracking-widest font-medium">
+          Authorized Personnel Only
+        </p>
+      </div>
+    </div>
+  </nz-card>
+</div>

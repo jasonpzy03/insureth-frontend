@@ -1,0 +1,10 @@
+::ng-deep .no-animate-bar * {
+    transition: none !important;
+    animation: none !important;
+}
+
+/* Also ensure the dropdown menus themselves which attach to the body don't animate */
+::ng-deep .ant-select-dropdown {
+    transition: none !important;
+    animation: none !important;
+}

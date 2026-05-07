@@ -1,0 +1,29 @@
+.audit-trail-shell {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.audit-trail-subtitle {
+  margin: 0;
+  color: #667085;
+}
+
+.audit-trail-card {
+  border-radius: 1rem;
+}
+
+.audit-trail-toolbar {
+  display: flex;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.audit-trail-search {
+  max-width: 420px;
+}
+
+.audit-trail-muted {
+  color: #98a2b3;
+  font-size: 0.75rem;
+}
