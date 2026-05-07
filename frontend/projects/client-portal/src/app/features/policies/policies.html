@@ -41,8 +41,8 @@
   </div>
 
   <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-    <nz-card *ngFor="let policy of filteredPolicies" [routerLink]="['/policies', policy.policyId]" class="shadow-md rounded-2xl overflow-hidden border-0 hover:shadow-lg transition-shadow cursor-pointer relative">
-      
+    <nz-card *ngFor="let policy of filteredPolicies" [routerLink]="['/policies', policy.policyId]" class="group shadow-md rounded-2xl overflow-hidden border border-transparent hover:border-violet-200 hover:shadow-xl hover:-translate-y-1 transition-all duration-200 cursor-pointer relative">
+
       <!-- Universal Type Badge -->
       <div class="absolute top-0 left-0 bg-[#8732fb] text-white text-[10px] font-bold uppercase tracking-wider px-3 py-1 rounded-br-lg z-10 shadow-sm border-b border-r border-[#7220e3]">
         {{policy.type}}
@@ -50,7 +50,13 @@
 
       <div class="flex justify-between items-start mb-4 pb-4 border-b border-gray-100 mt-4">
         <div>
-          <span class="text-xs font-bold text-gray-400 uppercase tracking-wider block mb-1">Policy #{{policy.policyId}}</span>
+          <div class="flex flex-wrap items-center gap-2 mb-1">
+            <span class="text-xs font-bold text-gray-400 uppercase tracking-wider block">Policy #{{policy.policyId}}</span>
+            <span class="inline-flex items-center gap-1 rounded-full bg-violet-50 px-2 py-1 text-[11px] font-bold text-violet-700 border border-violet-100">
+              <span nz-icon nzType="deployment-unit" nzTheme="outline" class="text-[10px]"></span>
+              {{policy.nft?.collectionSymbol || 'IFP'}} #{{policy.nft?.tokenId || policy.policyId}}
+            </span>
+          </div>
           <h3 class="text-xl font-black text-gray-800 m-0">{{policy.flightNumber}}</h3>
         </div>
         <nz-tag [nzColor]="getDisplayStatusColor(policy)" class="rounded-full border-0 px-3 font-semibold m-0">
@@ -124,6 +130,13 @@
       </div>
       <div *ngIf="policy.claimed && policy.payoutAmount === 0" class="bg-gray-50 rounded-xl p-3 border border-gray-200 text-center">
         <span class="text-sm font-bold text-gray-500">Policy Concluded</span>
+      </div>
+
+      <div class="mt-4 pt-4 border-t border-gray-100 flex items-center justify-between text-sm">
+        <span class="font-semibold text-violet-700 group-hover:text-violet-900 transition-colors">View policy details</span>
+        <span class="inline-flex items-center justify-center w-9 h-9 rounded-full bg-violet-50 text-violet-700 border border-violet-100 group-hover:bg-violet-100 group-hover:border-violet-200 group-hover:translate-x-1 transition-all">
+          <span class="text-base font-black leading-none">></span>
+        </span>
       </div>
     </nz-card>
   </div>

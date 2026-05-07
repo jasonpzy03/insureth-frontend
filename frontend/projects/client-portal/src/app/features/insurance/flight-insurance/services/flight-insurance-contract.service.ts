@@ -9,6 +9,223 @@ import { FLIGHT_INSURANCE_CONTRACT_ADDRESS, FLIGHT_INSURANCE_ABI } from '../cons
 export class FlightInsuranceContractService {
   private walletService = inject(WalletService);
 
+  private hasFunction(contract: Contract, signature: string): boolean {
+    try {
+      contract.interface.getFunction(signature);
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  private shortenAddress(address: string | null | undefined): string {
+    if (!address) {
+      return 'Unavailable';
+    }
+
+    return `${address.slice(0, 6)}...${address.slice(-4)}`;
+  }
+
+  private normalizeIpfsUrl(value: string | null | undefined): string | null {
+    if (!value) {
+      return null;
+    }
+
+    const trimmed = value.trim();
+    if (!trimmed) {
+      return null;
+    }
+
+    if (trimmed.startsWith('ipfs://')) {
+      const path = trimmed.slice('ipfs://'.length).replace(/^ipfs\//, '');
+      return `https://gateway.pinata.cloud/ipfs/${path}`;
+    }
+
+    return trimmed;
+  }
+
+  private async fetchJson(url: string): Promise<any | null> {
+    try {
+      const response = await fetch(url);
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.warn(`Failed to fetch NFT metadata from ${url}`, error);
+      return null;
+    }
+  }
+
+  private getExplorerBaseUrl(chainId: number): string | null {
+    switch (chainId) {
+      case 1:
+        return 'https://etherscan.io';
+      case 11155111:
+        return 'https://sepolia.etherscan.io';
+      case 8453:
+        return 'https://basescan.org';
+      case 84532:
+        return 'https://sepolia.basescan.org';
+      default:
+        return null;
+    }
+  }
+
+  private async getExplorerBaseUrlForContract(contract: Contract): Promise<string | null> {
+    try {
+      const provider =
+        (contract.runner as any)?.provider ??
+        this.walletService.getProvider();
+
+      if (!provider) {
+        return 'https://sepolia.etherscan.io';
+      }
+
+      const network = await provider.getNetwork();
+      return this.getExplorerBaseUrl(Number(network.chainId)) ?? 'https://sepolia.etherscan.io';
+    } catch {
+      return 'https://sepolia.etherscan.io';
+    }
+  }
+
+  private async readPolicyOwner(
+    contract: Contract,
+    policyId: bigint,
+    fallbackHolder?: string | null
+  ): Promise<string | null> {
+    if (this.hasFunction(contract, 'ownerOf(uint256)')) {
+      try {
+        return await contract['ownerOf'](policyId);
+      } catch (error) {
+        console.warn(`Failed to read ownerOf(${policyId.toString()})`, error);
+      }
+    }
+
+    return fallbackHolder ?? null;
+  }
+
+  private async readPolicyNftMetadata(
+    contract: Contract,
+    policyId: bigint,
+    owner: string | null,
+    fallbackHolder?: string | null
+  ): Promise<{
+    tokenId: string;
+    owner: string | null;
+    ownerShort: string;
+    contractAddress: string;
+    tokenUri: string | null;
+    collectionName: string;
+    collectionSymbol: string;
+    standardLabel: string;
+    soulboundLabel: string;
+    interfaceAvailable: boolean;
+    explorerTokenUrl: string | null;
+    explorerContractUrl: string | null;
+    metadataPending: boolean;
+    metadataLoaded: boolean;
+    metadataUrl: string | null;
+    metadataName: string | null;
+    metadataDescription: string | null;
+    metadataImage: string | null;
+    metadataImageUrl: string | null;
+    metadataAttributes: Array<{ trait_type?: string; value?: unknown; [key: string]: unknown }>;
+    metadataProperties: Record<string, unknown> | null;
+  }> {
+    const contractAddress = await contract.getAddress();
+    const explorerBaseUrl = await this.getExplorerBaseUrlForContract(contract);
+    const interfaceAvailable = this.hasFunction(contract, 'ownerOf(uint256)');
+
+    let collectionName = 'Insureth Flight Policy';
+    let collectionSymbol = 'IFP';
+    let tokenUri: string | null = null;
+    let metadataUrl: string | null = null;
+    let metadataName: string | null = null;
+    let metadataDescription: string | null = null;
+    let metadataImage: string | null = null;
+    let metadataImageUrl: string | null = null;
+    let metadataAttributes: Array<{ trait_type?: string; value?: unknown; [key: string]: unknown }> = [];
+    let metadataProperties: Record<string, unknown> | null = null;
+
+    if (interfaceAvailable) {
+      if (this.hasFunction(contract, 'name()')) {
+        try {
+          collectionName = await contract['name']();
+        } catch (error) {
+          console.warn('Failed to read policy NFT collection name', error);
+        }
+      }
+
+      if (this.hasFunction(contract, 'symbol()')) {
+        try {
+          collectionSymbol = await contract['symbol']();
+        } catch (error) {
+          console.warn('Failed to read policy NFT collection symbol', error);
+        }
+      }
+
+      if (this.hasFunction(contract, 'tokenURI(uint256)')) {
+        try {
+          tokenUri = await contract['tokenURI'](policyId);
+        } catch (error) {
+          console.warn(`Failed to read tokenURI(${policyId.toString()})`, error);
+        }
+      }
+    }
+
+    const metadataPending = !!tokenUri && tokenUri.startsWith('policy://');
+    if (tokenUri && !metadataPending) {
+      metadataUrl = this.normalizeIpfsUrl(tokenUri);
+
+      if (metadataUrl) {
+        const metadata = await this.fetchJson(metadataUrl);
+        if (metadata && typeof metadata === 'object') {
+          metadataName = typeof metadata.name === 'string' ? metadata.name : null;
+          metadataDescription = typeof metadata.description === 'string' ? metadata.description : null;
+          metadataImage = typeof metadata.image === 'string' ? metadata.image : null;
+          metadataImageUrl = this.normalizeIpfsUrl(metadataImage);
+          metadataAttributes = Array.isArray(metadata.attributes)
+            ? metadata.attributes.filter((entry: unknown) => !!entry && typeof entry === 'object') as Array<{ trait_type?: string; value?: unknown; [key: string]: unknown }>
+            : [];
+          metadataProperties =
+            metadata.properties && typeof metadata.properties === 'object'
+              ? metadata.properties as Record<string, unknown>
+              : null;
+        }
+      }
+    }
+
+    return {
+      tokenId: policyId.toString(),
+      owner: owner ?? fallbackHolder ?? null,
+      ownerShort: this.shortenAddress(owner ?? fallbackHolder ?? null),
+      contractAddress,
+      tokenUri,
+      collectionName,
+      collectionSymbol,
+      standardLabel: interfaceAvailable ? 'ERC-721' : 'Policy NFT (pending redeploy)',
+      soulboundLabel: 'Soulbound / non-transferable',
+      interfaceAvailable,
+      explorerTokenUrl: explorerBaseUrl
+        ? `${explorerBaseUrl}/token/${contractAddress}?a=${policyId.toString()}`
+        : null,
+      explorerContractUrl: explorerBaseUrl
+        ? `${explorerBaseUrl}/address/${contractAddress}`
+        : null,
+      metadataPending,
+      metadataLoaded: !!metadataName || !!metadataDescription || !!metadataImageUrl || metadataAttributes.length > 0,
+      metadataUrl,
+      metadataName,
+      metadataDescription,
+      metadataImage,
+      metadataImageUrl,
+      metadataAttributes,
+      metadataProperties
+    };
+  }
+
   private extractPolicyIdFromReceipt(contract: Contract, receipt: any): string | null {
     const logs = receipt?.logs ?? [];
 
@@ -369,6 +586,17 @@ export class FlightInsuranceContractService {
       const policyData = await contract['policies'](policyId);
       const riskData = await contract['risks'](riskKey);
       const purchaseBlock = await (event as any).getBlock();
+      const nftOwner = await this.readPolicyOwner(
+        contract,
+        BigInt(policyId.toString()),
+        policyData.holder ?? null
+      );
+      const nftMetadata = await this.readPolicyNftMetadata(
+        contract,
+        BigInt(policyId.toString()),
+        nftOwner,
+        policyData.holder ?? null
+      );
 
       policies.push({
         policyId: policyId.toString(),
@@ -388,7 +616,8 @@ export class FlightInsuranceContractService {
         active: policyData.active,
         claimed: policyData.claimed,
         payoutAmount: formatEther(policyData.payoutAmount),
-        type: 'Flight Insurance'
+        type: 'Flight Insurance',
+        nft: nftMetadata
       });
     }
 
@@ -409,13 +638,20 @@ export class FlightInsuranceContractService {
 
     const policyId = BigInt(policyIdStr);
     const policyData = await contract['policies'](policyId);
+    const policyOwner = await this.readPolicyOwner(contract, policyId, policyData.holder ?? null);
 
     // Safety check: is it this user's policy?
-    if (policyData.holder.toLowerCase() !== address.toLowerCase()) {
+    if (!policyOwner || policyOwner.toLowerCase() !== address.toLowerCase()) {
       throw new Error('Not authorized to view this policy');
     }
 
     const riskData = await contract['risks'](policyData.riskKey);
+    const nftMetadata = await this.readPolicyNftMetadata(
+      contract,
+      policyId,
+      policyOwner,
+      policyData.holder ?? null
+    );
 
     // Get Purchase Event
     const purchaseFilter = contract.filters['PolicyPurchased'](policyId);
@@ -485,7 +721,8 @@ export class FlightInsuranceContractService {
         resolved: Boolean(riskData.resolved),
         active: policyData.active,
         claimed: policyData.claimed,
-        payoutAmount: formatEther(policyData.payoutAmount)
+        payoutAmount: formatEther(policyData.payoutAmount),
+        nft: nftMetadata
       },
       transactions: transactions.sort((a, b) => a.timestamp - b.timestamp)
     };

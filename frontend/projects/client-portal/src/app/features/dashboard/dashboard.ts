@@ -64,6 +64,8 @@ type DashboardActivity = {
   styleUrl: './dashboard.scss'
 })
 export class DashboardComponent implements OnInit, OnDestroy {
+  private static readonly ORACLE_MANUAL_REVIEW_GRACE_MS = 10 * 60 * 1000;
+
   private contractService = inject(FlightInsuranceContractService);
   private flightInsuranceService = inject(FlightInsuranceService);
   private walletService = inject(WalletService);
@@ -304,25 +306,33 @@ export class DashboardComponent implements OnInit, OnDestroy {
       return 0;
     }
 
+    if (this.ongoingPolicy.resolved) {
+      return 100;
+    }
+
     if (this.isOracleVerificationStuck(this.ongoingPolicy)) {
       return 100;
     }
 
-    if (this.ongoingPolicy.oracleRequested) {
-      return 90;
-    }
-
-    if (!this.ongoingPolicy.purchaseTimestamp) {
+    if (!this.ongoingPolicy.purchaseTimestamp || !this.ongoingPolicy.verificationEligibleAt) {
       return 20;
     }
 
     const totalWindow = this.ongoingPolicy.verificationEligibleAt - this.ongoingPolicy.purchaseTimestamp;
     if (totalWindow <= 0) {
-      return 100;
+      return this.ongoingPolicy.oracleRequested ? 85 : 60;
     }
 
     const elapsed = this.now - this.ongoingPolicy.purchaseTimestamp;
-    return Math.min(Math.max(Math.round((elapsed / totalWindow) * 100), 0), 100);
+    const ratio = Math.min(Math.max(elapsed / totalWindow, 0), 1);
+    const progress = Math.round(ratio * 100);
+    return this.ongoingPolicy.oracleRequested ? Math.max(progress, 85) : progress;
+  }
+
+  getVerificationProgressBarBackground(policy: DashboardPolicy | null): string {
+    return this.isOracleVerificationStuck(policy)
+      ? 'linear-gradient(90deg, #fbbf24 0%, #f59e0b 50%, #f97316 100%)'
+      : 'linear-gradient(90deg, #8732fb 0%, #6f5ef9 50%, #40c4ff 100%)';
   }
 
   formatOracleExpectedTime(): string {
@@ -352,6 +362,20 @@ export class DashboardComponent implements OnInit, OnDestroy {
   }
 
   isOracleVerificationStuck(policy: DashboardPolicy | null): boolean {
-    return !!policy && !policy.resolved && policy.status === 0 && !!policy.oracleRequested;
+    if (!policy || policy.resolved || policy.status !== 0 || !policy.oracleRequested) {
+      return false;
+    }
+
+    const verificationEligibleAt = Number(policy.verificationEligibleAt ?? 0);
+    if (!verificationEligibleAt) {
+      return false;
+    }
+
+    const graceMs = Math.max(
+      Number(policy.verificationBufferSeconds ?? 0) * 1000,
+      DashboardComponent.ORACLE_MANUAL_REVIEW_GRACE_MS
+    );
+
+    return this.now >= verificationEligibleAt + graceMs;
   }
 }

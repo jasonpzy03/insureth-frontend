@@ -7,6 +7,7 @@ import { NzCollapseModule } from 'ng-zorro-antd/collapse';
 import { NzIconModule } from 'ng-zorro-antd/icon';
 import { NzLayoutModule } from 'ng-zorro-antd/layout';
 import { NzTagModule } from 'ng-zorro-antd/tag';
+import { getRuntimeConfig } from './runtime-config';
 
 @Component({
   selector: 'app-root',
@@ -121,7 +122,7 @@ export class App {
     { value: 'Transparent', label: 'policy lifecycle visibility', tone: 'mint' }
   ];
 
-  readonly portalUrl = 'http://localhost:4200';
+  readonly portalUrl = getRuntimeConfig().clientPortalUrl;
   constructor() {
     this.title.setTitle('Insureth | Parametric Insurance for Travelers and Investors');
     this.meta.updateTag({

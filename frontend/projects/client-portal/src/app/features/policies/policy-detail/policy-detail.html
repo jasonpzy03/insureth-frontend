@@ -71,14 +71,7 @@
       <div class="w-full h-3 bg-gray-100 rounded-full overflow-hidden mb-6">
         <div
           class="h-full rounded-full transition-all duration-500"
-          [class.bg-gradient-to-r]="!isOracleVerificationStuck(policyDetails.policy)"
-          [class.from-[#8732fb]]="!isOracleVerificationStuck(policyDetails.policy)"
-          [class.via-[#6f5ef9]]="!isOracleVerificationStuck(policyDetails.policy)"
-          [class.to-[#40c4ff]]="!isOracleVerificationStuck(policyDetails.policy)"
-          [class.bg-gradient-to-r]="isOracleVerificationStuck(policyDetails.policy)"
-          [class.from-amber-400]="isOracleVerificationStuck(policyDetails.policy)"
-          [class.via-amber-500]="isOracleVerificationStuck(policyDetails.policy)"
-          [class.to-orange-500]="isOracleVerificationStuck(policyDetails.policy)"
+          [style.background]="getVerificationProgressBarBackground(policyDetails.policy)"
           [style.width.%]="getVerificationProgress(policyDetails.policy)">
         </div>
       </div>
@@ -115,6 +108,151 @@
       </div>
     </div>
 
+    <div class="bg-white rounded-2xl shadow-sm p-8 mb-6 border border-gray-100">
+      <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-6">
+        <div class="flex-1">
+          <span class="text-xs font-bold text-violet-600 uppercase tracking-widest mb-2 block">Policy NFT Identity</span>
+          <h3 class="text-2xl font-black text-gray-800 m-0">
+            {{getNftDisplayName()}}
+          </h3>
+          <p class="text-sm text-gray-500 mt-3 mb-0 max-w-3xl">
+            {{getNftDescription()}}
+          </p>
+        </div>
+        <div
+          class="rounded-2xl px-5 py-4 min-w-[16rem] border"
+          [class.bg-amber-50]="policyDetails.policy.nft?.metadataPending"
+          [class.border-amber-200]="policyDetails.policy.nft?.metadataPending"
+          [class.bg-violet-50]="!policyDetails.policy.nft?.metadataPending"
+          [class.border-violet-100]="!policyDetails.policy.nft?.metadataPending">
+          <span class="text-xs font-bold text-violet-600 uppercase tracking-widest block mb-2">Token</span>
+          <span class="text-lg font-black text-violet-900 block">
+            {{policyDetails.policy.nft?.collectionSymbol || 'IFP'}} #{{policyDetails.policy.nft?.tokenId || policyDetails.policy.policyId}}
+          </span>
+          <span class="text-xs font-semibold text-violet-700 mt-2 block">
+            {{policyDetails.policy.nft?.metadataPending ? 'Metadata pinning in progress' : (policyDetails.policy.nft?.soulboundLabel || 'Soulbound / non-transferable')}}
+          </span>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 xl:grid-cols-[minmax(0,360px)_minmax(0,1fr)] gap-6 mt-6">
+        <div class="rounded-[28px] border border-violet-100 bg-gradient-to-br from-[#fcfbff] via-white to-violet-50 p-5 shadow-sm">
+          <div class="rounded-[24px] overflow-hidden border border-violet-100 bg-white aspect-square flex items-center justify-center">
+            <img
+              *ngIf="policyDetails.policy.nft?.metadataImageUrl"
+              [src]="policyDetails.policy.nft?.metadataImageUrl"
+              [alt]="getNftDisplayName()"
+              class="w-full h-full object-cover" />
+
+            <div *ngIf="!policyDetails.policy.nft?.metadataImageUrl && !policyDetails.policy.nft?.metadataPending" class="flex flex-col items-center justify-center text-center p-8">
+              <span nz-icon nzType="picture" nzTheme="outline" class="text-4xl text-violet-300 mb-4"></span>
+              <span class="text-base font-black text-gray-700">Metadata image unavailable</span>
+              <span class="text-sm text-gray-400 mt-2">The NFT exists on-chain, but no artwork has been resolved from the token metadata yet.</span>
+            </div>
+
+            <div *ngIf="policyDetails.policy.nft?.metadataPending" class="flex flex-col items-center justify-center text-center p-8 bg-gradient-to-br from-amber-50 to-orange-50 w-full h-full">
+              <span nz-icon nzType="loading" nzTheme="outline" class="text-4xl text-amber-500 mb-4"></span>
+              <span class="text-base font-black text-amber-900">NFT metadata is minting</span>
+              <span class="text-sm text-amber-700 mt-2">Your policy token exists on-chain, and the metadata package is still being pinned to IPFS.</span>
+            </div>
+          </div>
+
+          <div class="mt-4 flex items-start justify-between gap-4">
+            <div>
+              <span class="text-xs font-bold text-violet-600 uppercase tracking-widest block mb-1">Collection</span>
+              <span class="text-lg font-black text-gray-900 block">{{policyDetails.policy.nft?.collectionName || 'Insureth Flight Policy'}}</span>
+              <span class="text-sm font-medium text-gray-500 block mt-1">{{policyDetails.policy.nft?.standardLabel || 'ERC-721'}}</span>
+            </div>
+            <nz-tag [nzColor]="policyDetails.policy.nft?.metadataPending ? 'orange' : 'purple'" class="rounded-full border-0 px-3 py-1 text-xs font-bold">
+              {{policyDetails.policy.nft?.metadataPending ? 'Minting metadata' : 'Metadata live'}}
+            </nz-tag>
+          </div>
+
+          <div class="mt-4 grid grid-cols-2 gap-3">
+            <div class="rounded-2xl bg-white border border-gray-100 p-3">
+              <span class="text-[11px] font-bold text-gray-400 uppercase tracking-widest block mb-1">Token ID</span>
+              <span class="text-sm font-black text-gray-800">{{policyDetails.policy.nft?.tokenId || policyDetails.policy.policyId}}</span>
+            </div>
+            <div class="rounded-2xl bg-white border border-gray-100 p-3">
+              <span class="text-[11px] font-bold text-gray-400 uppercase tracking-widest block mb-1">Transferability</span>
+              <span class="text-sm font-black text-gray-800">{{policyDetails.policy.nft?.soulboundLabel || 'Soulbound'}}</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="flex flex-col gap-4">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="rounded-2xl bg-gray-50 border border-gray-200 p-4">
+              <span class="text-xs font-bold text-gray-400 uppercase tracking-widest block mb-2">Owner Wallet</span>
+              <span class="text-sm font-black text-gray-800 break-all">{{policyDetails.policy.nft?.owner || 'Unavailable'}}</span>
+            </div>
+            <div class="rounded-2xl bg-gray-50 border border-gray-200 p-4">
+              <span class="text-xs font-bold text-gray-400 uppercase tracking-widest block mb-2">Metadata URI</span>
+              <span class="text-sm font-black text-gray-800 break-all">{{policyDetails.policy.nft?.tokenUri || 'Generated after NFT-ready redeploy'}}</span>
+            </div>
+            <div class="rounded-2xl bg-gray-50 border border-gray-200 p-4">
+              <span class="text-xs font-bold text-gray-400 uppercase tracking-widest block mb-2">Contract Address</span>
+              <span class="text-sm font-black text-gray-800 break-all">{{policyDetails.policy.nft?.contractAddress || 'Unavailable'}}</span>
+            </div>
+            <div class="rounded-2xl bg-gray-50 border border-gray-200 p-4">
+              <span class="text-xs font-bold text-gray-400 uppercase tracking-widest block mb-2">Metadata Source</span>
+              <span class="text-sm font-black text-gray-800 break-all">{{policyDetails.policy.nft?.metadataUrl || (policyDetails.policy.nft?.metadataPending ? 'Waiting for IPFS metadata' : 'Unavailable')}}</span>
+            </div>
+          </div>
+
+          <div *ngIf="nftTraitEntries().length" class="rounded-2xl bg-gray-50 border border-gray-200 p-5">
+            <span class="text-xs font-bold text-gray-400 uppercase tracking-widest block mb-4">NFT Traits</span>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div *ngFor="let trait of nftTraitEntries()" class="rounded-2xl bg-white border border-gray-100 p-4">
+                <span class="text-[11px] font-bold text-gray-400 uppercase tracking-widest block mb-1">{{trait.label}}</span>
+                <span class="text-sm font-black text-gray-800 break-words">{{trait.value}}</span>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <div class="mt-6 flex flex-wrap gap-3">
+        <a
+          *ngIf="policyDetails.policy.nft?.metadataUrl"
+          [href]="policyDetails.policy.nft?.metadataUrl"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="inline-flex items-center gap-2 rounded-xl bg-white px-4 py-3 text-sm font-bold text-violet-700 border border-violet-200 hover:border-violet-300">
+          <span nz-icon nzType="file-search" nzTheme="outline"></span>
+          View Metadata JSON
+        </a>
+        <a
+          *ngIf="policyDetails.policy.nft?.metadataImageUrl"
+          [href]="policyDetails.policy.nft?.metadataImageUrl"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="inline-flex items-center gap-2 rounded-xl bg-white px-4 py-3 text-sm font-bold text-violet-700 border border-violet-200 hover:border-violet-300">
+          <span nz-icon nzType="picture" nzTheme="outline"></span>
+          Open NFT Artwork
+        </a>
+        <a
+          *ngIf="policyDetails.policy.nft?.explorerTokenUrl"
+          [href]="policyDetails.policy.nft?.explorerTokenUrl"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="inline-flex items-center gap-2 rounded-xl bg-[#8732fb] px-4 py-3 text-sm font-bold text-white hover:bg-[#7220e3]">
+          <span nz-icon nzType="link" nzTheme="outline"></span>
+          View NFT on Explorer
+        </a>
+        <a
+          *ngIf="policyDetails.policy.nft?.explorerContractUrl"
+          [href]="policyDetails.policy.nft?.explorerContractUrl"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="inline-flex items-center gap-2 rounded-xl bg-white px-4 py-3 text-sm font-bold text-violet-700 border border-violet-200 hover:border-violet-300">
+          <span nz-icon nzType="deployment-unit" nzTheme="outline"></span>
+          View NFT Contract
+        </a>
+      </div>
+    </div>
+
     <!-- Timeline Transparent Tracker -->
     <div class="bg-white rounded-2xl shadow-sm p-8 border border-gray-100">
       <h3 class="text-xl font-bold text-gray-800 mb-8 flex items-center gap-2">
@@ -123,12 +261,12 @@
       </h3>
 
       <nz-timeline [nzReverse]="true">
-        <nz-timeline-item *ngFor="let tx of policyDetails.transactions" 
+        <nz-timeline-item *ngFor="let tx of policyDetails.transactions"
           [nzColor]="tx.type === 'PURCHASE' ? 'blue' : 'green'">
           <div class="ml-4">
             <h4 class="font-bold text-gray-800 text-lg m-0">{{tx.label}}</h4>
             <span class="text-sm text-gray-500 block mb-2">{{tx.timestamp | date:'medium'}}</span>
-            
+
             <div class="bg-gray-50 p-4 rounded-lg border border-gray-200 flex flex-col gap-2">
               <div class="flex justify-between">
                 <span class="text-gray-500 font-semibold text-xs uppercase tracking-wider">Amount</span>

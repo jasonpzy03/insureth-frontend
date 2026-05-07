@@ -248,6 +248,7 @@ export class FlightInsuranceAdminService {
 
       const policyId = Number(args.policyId);
       const riskKey = String(args.riskKey);
+      const holder = String(args.policyHolder ?? args.holder ?? '');
 
       const [policy, risk, purchaseTimestamp] = await Promise.all([
         contract['policies'](BigInt(policyId)),
@@ -256,7 +257,6 @@ export class FlightInsuranceAdminService {
       ]);
 
       const [
-        holder,
         policyRiskKey,
         premiumWei,
         payoutAmountWei,
@@ -278,7 +278,7 @@ export class FlightInsuranceAdminService {
 
       return {
         policyId,
-        holder: String(holder),
+        holder,
         riskKey: String(policyRiskKey || riskKey),
         flightNumber: String(flightNumber),
         origin: String(origin),

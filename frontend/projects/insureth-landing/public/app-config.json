@@ -1,0 +1,6 @@
+{
+  "gatewayUrl": "http://localhost:8080",
+  "clientPortalUrl": "http://localhost:4200",
+  "backOfficeUrl": "http://localhost:4300",
+  "landingUrl": "http://localhost:4400"
+}

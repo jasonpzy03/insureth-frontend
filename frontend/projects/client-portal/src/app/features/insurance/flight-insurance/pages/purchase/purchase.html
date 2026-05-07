@@ -139,20 +139,26 @@
         </div>
       </div>
 
-      <div class="coverage-list">
-        <div class="coverage-row" *ngFor="let delayRow of delayCoverageRows">
-          <div class="coverage-row__detail">
-            <span class="coverage-row__icon coverage-row__icon--amber">
-              <i nz-icon nzType="clock-circle"></i>
-            </span>
-            <div>
-              <div class="coverage-row__title">{{ delayRow.label }}</div>
-              <div class="coverage-row__meta">{{ delayRow.meta }}</div>
-            </div>
-          </div>
-          <span class="coverage-row__amount">{{ delayRow.amount }}</span>
+      <nz-spin [nzSpinning]="isContractDataLoading" nzTip="Loading smart contract payout preview...">
+        <div class="coverage-loading-note" *ngIf="isContractDataLoading">
+          Delay and cancellation benefit tiers are being fetched from the smart contract.
         </div>
-      </div>
+
+        <div class="coverage-list">
+          <div class="coverage-row" *ngFor="let delayRow of delayCoverageRows">
+            <div class="coverage-row__detail">
+              <span class="coverage-row__icon coverage-row__icon--amber">
+                <i nz-icon nzType="clock-circle"></i>
+              </span>
+              <div>
+                <div class="coverage-row__title">{{ delayRow.label }}</div>
+                <div class="coverage-row__meta">{{ delayRow.meta }}</div>
+              </div>
+            </div>
+            <span class="coverage-row__amount">{{ delayRow.amount }}</span>
+          </div>
+        </div>
+      </nz-spin>
 
     </nz-card>
 

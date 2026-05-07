@@ -21,6 +21,8 @@ import { NzSelectModule } from 'ng-zorro-antd/select';
   styleUrl: './policies.scss'
 })
 export class PoliciesComponent implements OnInit {
+  private static readonly ORACLE_MANUAL_REVIEW_GRACE_MS = 10 * 60 * 1000;
+
   private contractService = inject(FlightInsuranceContractService);
   private flightInsuranceService = inject(FlightInsuranceService);
   private walletService = inject(WalletService);
@@ -243,7 +245,21 @@ export class PoliciesComponent implements OnInit {
   }
 
   isOracleVerificationStuck(policy: any): boolean {
-    return !!policy && !policy.resolved && policy.status === 0 && !!policy.oracleRequested;
+    if (!policy || policy.resolved || policy.status !== 0 || !policy.oracleRequested) {
+      return false;
+    }
+
+    const verificationEligibleAt = Number(policy.verificationEligibleAt ?? 0);
+    if (!verificationEligibleAt) {
+      return false;
+    }
+
+    const graceMs = Math.max(
+      Number(policy.verificationBufferSeconds ?? 0) * 1000,
+      PoliciesComponent.ORACLE_MANUAL_REVIEW_GRACE_MS
+    );
+
+    return Date.now() >= verificationEligibleAt + graceMs;
   }
 
   getPayoutTierRows(policy: any): Array<{ label: string; value: string }> {

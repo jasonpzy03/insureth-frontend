@@ -1,5 +1,13 @@
+import { getRuntimeConfig } from '../config/runtime-config';
+
+const getGatewayUrl = (): string => getRuntimeConfig().gatewayUrl;
+
 export const API = {
-  AUTH_BASE_URL: 'http://localhost:8080/api/v1/auth',
-  INSURANCE_BASE_URL: 'http://localhost:8080/api/v1/insurance',
+  get AUTH_BASE_URL() {
+    return `${getGatewayUrl()}/api/v1/auth`;
+  },
+  get INSURANCE_BASE_URL() {
+    return `${getGatewayUrl()}/api/v1/insurance`;
+  },
   BACKOFFICE: 'backoffice'
 };

@@ -21,6 +21,8 @@ import { firstValueFrom } from 'rxjs';
   styleUrl: './policy-detail.scss' // Create an empty scss if needed
 })
 export class PolicyDetailComponent implements OnInit, OnDestroy {
+  private static readonly ORACLE_MANUAL_REVIEW_GRACE_MS = 10 * 60 * 1000;
+
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   private contractService = inject(FlightInsuranceContractService);
@@ -107,6 +109,38 @@ export class PolicyDetailComponent implements OnInit, OnDestroy {
     return this.ethPriceService.formatApproxUsd(amount);
   }
 
+  nftTraitEntries(): Array<{ label: string; value: string }> {
+    const traits = this.policyDetails?.policy?.nft?.metadataAttributes;
+    if (!Array.isArray(traits)) {
+      return [];
+    }
+
+    return traits
+      .map((trait: any) => ({
+        label: typeof trait?.trait_type === 'string' ? trait.trait_type : 'Attribute',
+        value: trait?.value == null ? 'N/A' : String(trait.value)
+      }))
+      .filter((trait: { label: string; value: string }) => !!trait.value);
+  }
+
+  nftPropertyEntries(): Array<{ label: string; value: string }> {
+    return [];
+  }
+
+  getNftDisplayName(): string {
+    return this.policyDetails?.policy?.nft?.metadataName
+      || `${this.policyDetails?.policy?.nft?.collectionName || 'Insureth Flight Policy'} #${this.policyDetails?.policy?.nft?.tokenId || this.policyDetails?.policy?.policyId}`;
+  }
+
+  getNftDescription(): string {
+    if (this.policyDetails?.policy?.nft?.metadataPending) {
+      return 'Your policy NFT has been minted on-chain, and metadata is still being pinned to IPFS. The artwork and full collectible details will appear automatically once the minting pipeline completes.';
+    }
+
+    return this.policyDetails?.policy?.nft?.metadataDescription
+      || 'This soulbound NFT represents your flight insurance policy and stays permanently tied to the wallet that purchased coverage.';
+  }
+
   getVerificationProgress(policy: any): number {
     if (!policy) {
       return 0;
@@ -133,6 +167,12 @@ export class PolicyDetailComponent implements OnInit, OnDestroy {
     const ratio = Math.min(Math.max(elapsed / totalWindow, 0), 1);
     const progress = Math.round(ratio * 100);
     return policy.oracleRequested ? Math.max(progress, 85) : progress;
+  }
+
+  getVerificationProgressBarBackground(policy: any): string {
+    return this.isOracleVerificationStuck(policy)
+      ? 'linear-gradient(90deg, #fbbf24 0%, #f59e0b 50%, #f97316 100%)'
+      : 'linear-gradient(90deg, #8732fb 0%, #6f5ef9 50%, #40c4ff 100%)';
   }
 
   getVerificationHeadline(policy: any): string {
@@ -381,6 +421,20 @@ export class PolicyDetailComponent implements OnInit, OnDestroy {
   }
 
   isOracleVerificationStuck(policy: any): boolean {
-    return !!policy && !policy.resolved && policy.status === 0 && !!policy.oracleRequested;
+    if (!policy || policy.resolved || policy.status !== 0 || !policy.oracleRequested) {
+      return false;
+    }
+
+    const verificationEligibleAt = Number(policy.verificationEligibleAt ?? 0);
+    if (!verificationEligibleAt) {
+      return false;
+    }
+
+    const graceMs = Math.max(
+      Number(policy.verificationBufferSeconds ?? 0) * 1000,
+      PolicyDetailComponent.ORACLE_MANUAL_REVIEW_GRACE_MS
+    );
+
+    return this.now >= verificationEligibleAt + graceMs;
   }
 }

@@ -1,5 +1,11 @@
+import { getRuntimeConfig } from '../config/runtime-config';
+
+const getGatewayUrl = (): string => getRuntimeConfig().gatewayUrl;
+
 export const API = {
-  GATEWAY: 'http://localhost:8080',
+  get GATEWAY() {
+    return getGatewayUrl();
+  },
   PREFIX: 'api',
   VERSION: 'v1',
   BASE_URL: 'api/v1',
