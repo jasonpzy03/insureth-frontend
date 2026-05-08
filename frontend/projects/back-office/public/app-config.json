@@ -1,6 +1,6 @@
 {
   "gatewayUrl": "https://api.insureth.xyz",
   "clientPortalUrl": "https://app.insureth.xyz",
-  "backOfficeUrl": "http://admin.insureth.xyz",
-  "landingUrl": "http://insureth.xyz"
+  "backOfficeUrl": "https://admin.insureth.xyz",
+  "landingUrl": "https://insureth.xyz"
 }
